@@ -1,0 +1,170 @@
+<section class="py-10 px-4">
+  <div class="grid gap-6 lg:grid-cols-[280px_1fr]" [formGroup]="form">
+    <aside class="app-panel app-sidebar rounded-none lg:rounded-r-2xl">
+      <div class="app-panel-header">
+        <h2 class="text-sm font-semibold uppercase tracking-widest text-amber-800/70">Filters</h2>
+        <div class="text-xs font-semibold text-amber-800/70">Sort</div>
+      </div>
+      <div class="app-panel-body space-y-4">
+        <div>
+          <label class="app-label" for="sortBy">Sort By</label>
+          <select id="sortBy" formControlName="sortBy" class="mt-1 app-select">
+            <option value="priceLow">Price: Low to High</option>
+            <option value="priceHigh">Price: High to Low</option>
+            <option value="availability">Availability</option>
+          </select>
+        </div>
+
+        <div>
+          <p class="app-label">Price Range</p>
+          <div class="mt-2 grid gap-2 sm:grid-cols-2">
+            <input type="number" min="0" formControlName="priceMin" class="app-input" placeholder="Min" />
+            <input type="number" min="0" formControlName="priceMax" class="app-input" placeholder="Max" />
+          </div>
+        </div>
+
+        <div>
+          <p class="app-label">Room Size (sq ft)</p>
+          <div class="mt-2 grid gap-2 sm:grid-cols-2">
+            <input type="number" min="0" formControlName="sizeMin" class="app-input" placeholder="Min" />
+            <input type="number" min="0" formControlName="sizeMax" class="app-input" placeholder="Max" />
+          </div>
+        </div>
+
+        <div>
+          <p class="app-label">Amenities</p>
+          <div class="mt-2 grid gap-2">
+            <label *ngFor="let amenity of amenityOptions" class="flex items-center gap-2 text-sm">
+              <input type="checkbox" [formControlName]="'amenity_' + amenity.key" />
+              <span>{{ amenity.label }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="space-y-6 px-6 lg:pr-10">
+      <div class="app-card p-8">
+        <h1 class="text-3xl font-semibold">Search Room Availability</h1>
+        <p class="mt-2 text-sm app-subtitle">Choose dates, guests, and room type to view available options.</p>
+
+        <form class="mt-6 grid gap-4 md:grid-cols-3" (ngSubmit)="search()">
+          <div>
+            <label class="app-label" for="checkIn">Check-in</label>
+            <input id="checkIn" type="date" formControlName="checkIn" class="mt-1 app-input" [min]="today" />
+            <p *ngIf="form.get('checkIn')?.touched && form.get('checkIn')?.hasError('required')" class="mt-1 text-xs text-rose-600">
+              Check-in date is required.
+            </p>
+            <p *ngIf="form.get('checkIn')?.touched && form.get('checkIn')?.hasError('pastDate')" class="mt-1 text-xs text-rose-600">
+              Check-in date cannot be in the past.
+            </p>
+          </div>
+
+          <div>
+            <label class="app-label" for="checkOut">Check-out</label>
+            <input
+              id="checkOut"
+              type="date"
+              formControlName="checkOut"
+              class="mt-1 app-input"
+              [min]="minCheckout"
+              [disabled]="!form.get('checkIn')?.value"
+            />
+            <p *ngIf="form.get('checkOut')?.touched && form.get('checkOut')?.hasError('required')" class="mt-1 text-xs text-rose-600">
+              Check-out date is required.
+            </p>
+            <p *ngIf="form.touched && form.hasError('checkOutBeforeCheckIn')" class="mt-1 text-xs text-rose-600">
+              Check-out date must be after the check-in date.
+            </p>
+          </div>
+
+          <div>
+            <label class="app-label" for="roomType">Room Type</label>
+            <select id="roomType" formControlName="roomType" class="mt-1 app-select">
+              <option value="" disabled>Select</option>
+              <option *ngFor="let type of roomTypes" [value]="type">{{ type }}</option>
+            </select>
+            <p *ngIf="form.get('roomType')?.touched && form.get('roomType')?.invalid" class="mt-1 text-xs text-rose-600">
+              Please select a room type.
+            </p>
+          </div>
+
+          <div>
+            <label class="app-label" for="adults">Number of Adults</label>
+            <input id="adults" type="number" min="1" max="10" formControlName="adults" class="mt-1 app-input" />
+            <p *ngIf="form.get('adults')?.touched && form.get('adults')?.hasError('min')" class="mt-1 text-xs text-rose-600">
+              At least one adult must be selected.
+            </p>
+            <p *ngIf="form.get('adults')?.touched && form.get('adults')?.hasError('max')" class="mt-1 text-xs text-rose-600">
+              Maximum 10 adults allowed.
+            </p>
+          </div>
+
+          <div>
+            <label class="app-label" for="children">Number of Children</label>
+            <input id="children" type="number" min="0" max="5" formControlName="children" class="mt-1 app-input" />
+            <p *ngIf="form.get('children')?.touched && form.get('children')?.hasError('min')" class="mt-1 text-xs text-rose-600">
+              Number of children cannot be negative.
+            </p>
+            <p *ngIf="form.get('children')?.touched && form.get('children')?.hasError('max')" class="mt-1 text-xs text-rose-600">
+              Maximum 5 children allowed.
+            </p>
+          </div>
+
+          <div class="md:col-span-3 flex flex-wrap items-center gap-3">
+            <button type="button" [disabled]="form.invalid" class="app-button" (click)="search()">
+              Search
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div *ngIf="searched && results.length === 0" class="app-card p-6">
+        <p class="text-sm app-subtitle">No rooms available for the selected dates. Please try different dates.</p>
+      </div>
+
+      <div *ngIf="groupedResults.length > 0" class="space-y-4">
+        <div *ngFor="let room of groupedResults" class="app-card p-6">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="flex flex-wrap items-start gap-4">
+              <img
+                [src]="room.imageUrl"
+                [alt]="room.roomType + ' room'"
+                class="h-24 w-32 rounded-xl object-cover border border-amber-200"
+                onerror="this.src='/assets/Standard.png'"
+              />
+              <div>
+                <p class="text-lg font-semibold">{{ room.roomType }} Room</p>
+                <p class="text-sm app-subtitle">Availability: {{ room.available ? 'Open' : 'Fully Booked' }}</p>
+                <p class="mt-2 text-sm">
+                  Occupancy: {{ room.occupancyAdults }} adults, {{ room.occupancyChildren }} children
+                </p>
+                <p class="text-sm">Size: {{ room.roomSizeSqFt }} sq ft</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span *ngFor="let amenity of room.amenities" class="app-badge">{{ amenity }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-2xl font-semibold">₹{{ room.price }}</p>
+              <p class="text-xs app-subtitle">per night</p>
+              <p class="mt-2 text-sm">
+                Status:
+                <span [class.text-emerald-700]="room.available" [class.text-rose-600]="!room.available">
+                  {{ room.available ? 'Available' : 'Fully Booked' }}
+                </span>
+              </p>
+              <button
+                class="mt-4 app-button"
+                [disabled]="!room.available"
+                (click)="book(room)"
+              >
+                Book Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

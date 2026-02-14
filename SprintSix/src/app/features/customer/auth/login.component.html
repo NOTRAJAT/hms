@@ -1,0 +1,52 @@
+<section class="mx-auto max-w-xl px-6 py-10">
+  <div class="app-card p-8">
+    <h1 class="text-3xl font-semibold">Welcome Back</h1>
+    <p class="mt-2 text-sm app-subtitle">Enter your credentials to access your dashboard.</p>
+
+    <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+      <div>
+        <label class="app-label" for="username">Username</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          class="mt-1 app-input"
+          placeholder="janedoe"
+        />
+        <p *ngIf="form.get('username')?.touched && form.get('username')?.invalid" class="mt-1 text-xs text-rose-600">
+          Username is required.
+        </p>
+      </div>
+
+      <div>
+        <label class="app-label" for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          class="mt-1 app-input"
+        />
+        <p *ngIf="form.get('password')?.touched && form.get('password')?.invalid" class="mt-1 text-xs text-rose-600">
+          Password is required.
+        </p>
+      </div>
+
+      <p *ngIf="errorMessage" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        {{ errorMessage }}
+      </p>
+
+      <button
+        type="submit"
+        [disabled]="form.invalid || isSubmitting"
+        class="w-full app-button"
+      >
+        Login
+      </button>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
+        <a routerLink="/password-reset" class="text-sm text-amber-900/80 hover:text-amber-900">Forgot Password?</a>
+        <a routerLink="/register" class="text-sm text-amber-900/80 hover:text-amber-900">Register Now</a>
+      </div>
+    </form>
+  </div>
+</section>

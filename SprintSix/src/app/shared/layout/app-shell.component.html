@@ -1,0 +1,52 @@
+<div class="min-h-screen app-shell">
+  <header class="app-header">
+    <div class="mx-auto mt-2 flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-800/70">Hotel Management System</p>
+        <p class="text-lg font-semibold">Customer Portal</p>
+      </div>
+
+      <nav class="flex flex-wrap items-center gap-2 text-sm font-medium" *ngIf="session.value; else publicNav">
+        <a routerLink="/dashboard" routerLinkActive="app-pill-active" class="app-pill">
+          Home
+        </a>
+        <a routerLink="/search" routerLinkActive="app-pill-active" class="app-pill">
+          Search Room Availability
+        </a>
+        <a routerLink="/bookings" routerLinkActive="app-pill-active" class="app-pill">
+          Booking History
+        </a>
+        <a routerLink="/contact" routerLinkActive="app-pill-active" class="app-pill">
+          Contact Us
+        </a>
+        <a routerLink="/complaints" routerLinkActive="app-pill-active" class="app-pill">
+          Register Complaint
+        </a>
+        <a routerLink="/complaints/view" routerLinkActive="app-pill-active" class="app-pill">
+          View Complaints
+        </a>
+        <a routerLink="/profile" routerLinkActive="app-pill-active" class="app-pill">
+          Profile
+        </a>
+      </nav>
+
+      <ng-template #publicNav>
+        <nav class="flex flex-wrap items-center gap-2 text-sm font-medium">
+          <a routerLink="/" routerLinkActive="app-pill-active" class="app-pill">
+            Home
+          </a>
+          <a routerLink="/register" routerLinkActive="app-pill-active" class="app-pill">
+            Register
+          </a>
+          <a routerLink="/login" routerLinkActive="app-pill-active" class="app-pill">
+            Login
+          </a>
+        </nav>
+      </ng-template>
+    </div>
+  </header>
+
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,0 +1,19 @@
+1️⃣ Download Binary
+wget https://nodejs.org/dist/v18.13.0/node-v18.13.0-linux-x64.tar.xz
+
+2️⃣ Extract
+tar -xf node-v18.13.0-linux-x64.tar.xz
+
+3️⃣ Move to /usr/local
+sudo mv node-v18.13.0-linux-x64 /usr/local/node-18.13.0
+
+4️⃣ Add to PATH
+echo 'export PATH=/usr/local/node-18.13.0/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+add from mac to server
+scp -r project/ ubuntu@ec2-43-204-29-30.ap-south-1.compute.amazonaws.com:/home/ubuntu/
+
+attach device @ DEVICE="/dev/xvdf"
+
+npm install -g @angular/cli@17.3.17 typescript@5.9.3

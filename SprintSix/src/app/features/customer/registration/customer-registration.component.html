@@ -1,0 +1,144 @@
+<section class="mx-auto max-w-6xl px-6 py-6">
+  <div class="app-card p-6">
+    <h1 class="text-3xl font-semibold">Customer Registration</h1>
+    <p class="mt-1 text-sm app-subtitle">Please complete all required fields to create your account.</p>
+
+    <form class="mt-3 space-y-3" [formGroup]="form" (ngSubmit)="submit()">
+      <div>
+        <label class="app-label" for="name">Customer Name</label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          class="mt-1 app-input"
+          placeholder="Jane Doe"
+        />
+        <p *ngIf="form.get('name')?.touched && form.get('name')?.invalid" class="mt-0.5 text-xs text-rose-600">
+          Name must be at least 3 characters long and contain only letters.
+        </p>
+      </div>
+
+      <div>
+        <label class="app-label" for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="mt-1 app-input"
+          placeholder="example@domain.com"
+        />
+        <p *ngIf="form.get('email')?.touched && form.get('email')?.invalid" class="mt-0.5 text-xs text-rose-600">
+          Enter a valid email address.
+        </p>
+        <p *ngIf="serverErrors['email']" class="mt-0.5 text-xs text-rose-600">{{ serverErrors['email'] }}</p>
+      </div>
+
+      <div>
+        <label class="app-label">Mobile Number</label>
+        <div class="mt-1 flex gap-2">
+          <select
+            formControlName="countryCode"
+            class="w-28 app-select"
+          >
+            <option value="" disabled>Select</option>
+            <option *ngFor="let code of countryCodes" [value]="code">{{ code }}</option>
+          </select>
+          <input
+            type="text"
+            inputmode="numeric"
+            formControlName="mobileNumber"
+            class="flex-1 app-input"
+            placeholder="12345678"
+            maxlength="10"
+            pattern="[0-9]*"
+            autocomplete="tel"
+            (input)="enforceNumericMobile(form.get('mobileNumber')?.value)"
+          />
+        </div>
+        <p
+          *ngIf="(form.get('countryCode')?.touched || form.get('mobileNumber')?.touched) &&
+          (form.get('countryCode')?.invalid || form.get('mobileNumber')?.invalid)"
+          class="mt-0.5 text-xs text-rose-600"
+        >
+          Enter a valid mobile number.
+        </p>
+        <p *ngIf="serverErrors['mobileNumber']" class="mt-0.5 text-xs text-rose-600">
+          {{ serverErrors['mobileNumber'] }}
+        </p>
+      </div>
+
+      <div>
+        <label class="app-label" for="address">Address</label>
+        <textarea
+          id="address"
+          rows="2"
+          formControlName="address"
+          class="mt-1 app-textarea"
+          placeholder="Street, City, State"
+        ></textarea>
+        <p *ngIf="form.get('address')?.touched && form.get('address')?.invalid" class="mt-0.5 text-xs text-rose-600">
+          Address must be at least 10 characters long.
+        </p>
+      </div>
+
+      <div>
+        <label class="app-label" for="username">Username</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          class="mt-1 app-input"
+          placeholder="janedoe"
+        />
+        <p *ngIf="form.get('username')?.touched && form.get('username')?.invalid" class="mt-0.5 text-xs text-rose-600">
+          Username must be at least 5 characters and unique.
+        </p>
+        <p *ngIf="serverErrors['username']" class="mt-0.5 text-xs text-rose-600">
+          {{ serverErrors['username'] }}
+        </p>
+      </div>
+
+      <div>
+        <label class="app-label" for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          class="mt-1 app-input"
+        />
+        <p *ngIf="form.get('password')?.touched && form.get('password')?.invalid" class="mt-0.5 text-xs text-rose-600">
+          Password must be at least 8 characters and include a mix of uppercase, lowercase, number, and special character.
+        </p>
+      </div>
+
+      <div>
+        <label class="app-label" for="confirmPassword">Confirm Password</label>
+        <input
+          id="confirmPassword"
+          type="password"
+          formControlName="confirmPassword"
+          class="mt-1 app-input"
+        />
+        <p
+          *ngIf="form.get('confirmPassword')?.touched && form.get('confirmPassword')?.invalid"
+          class="mt-0.5 text-xs text-rose-600"
+        >
+          Passwords do not match.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-3 pt-0.5">
+        <button type="submit" [disabled]="form.invalid || isSubmitting" class="app-button">
+          Register
+        </button>
+        <button
+          type="button"
+          (click)="reset()"
+          class="app-button-outline"
+        >
+          Reset
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

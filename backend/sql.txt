@@ -1,0 +1,111 @@
+-- Database and user setup
+CREATE DATABASE IF NOT EXISTS hms
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'me'@'localhost' IDENTIFIED BY 'TCS#123';
+GRANT ALL PRIVILEGES ON hms.* TO 'me'@'localhost';
+FLUSH PRIVILEGES;
+
+-- Tables
+USE hms;
+
+CREATE TABLE IF NOT EXISTS customers (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  user_id VARCHAR(32) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  mobile VARCHAR(32) NOT NULL,
+  address VARCHAR(512) NOT NULL,
+  username VARCHAR(255) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  failed_attempts INT NOT NULL DEFAULT 0,
+  locked BIT(1) NOT NULL DEFAULT b'0',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_customers_user_id (user_id),
+  UNIQUE KEY uk_customers_email (email),
+  UNIQUE KEY uk_customers_mobile (mobile),
+  UNIQUE KEY uk_customers_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS complaints (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  complaint_id VARCHAR(32) NOT NULL,
+  user_id VARCHAR(32) NOT NULL,
+  category VARCHAR(64) NOT NULL,
+  booking_id VARCHAR(32) NOT NULL,
+  title VARCHAR(100) NOT NULL,
+  description VARCHAR(500) NOT NULL,
+  contact_preference VARCHAR(16) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  expected_resolution_date DATE NOT NULL,
+  support_response VARCHAR(1000) NULL,
+  resolution_notes VARCHAR(1000) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_complaints_complaint_id (complaint_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS rooms (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  room_code VARCHAR(32) NOT NULL,
+  room_type VARCHAR(64) NOT NULL,
+  price_per_night INT NOT NULL,
+  occupancy_adults INT NOT NULL,
+  occupancy_children INT NOT NULL,
+  amenities_csv VARCHAR(1000) NOT NULL,
+  room_size_sq_ft INT NOT NULL,
+  image_url VARCHAR(255) NOT NULL,
+  active BIT(1) NOT NULL DEFAULT b'1',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_rooms_room_code (room_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS bookings (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  booking_id VARCHAR(32) NOT NULL,
+  invoice_id VARCHAR(32) NOT NULL,
+  transaction_id VARCHAR(32) NOT NULL,
+  customer_user_id VARCHAR(32) NOT NULL,
+  customer_name VARCHAR(255) NOT NULL,
+  customer_email VARCHAR(255) NOT NULL,
+  customer_mobile VARCHAR(32) NOT NULL,
+  room_code VARCHAR(32) NOT NULL,
+  room_type VARCHAR(64) NOT NULL,
+  occupancy_adults INT NOT NULL,
+  occupancy_children INT NOT NULL,
+  price_per_night INT NOT NULL,
+  check_in_date DATE NOT NULL,
+  check_out_date DATE NOT NULL,
+  nights INT NOT NULL,
+  adults INT NOT NULL,
+  children INT NOT NULL,
+  base_price INT NOT NULL,
+  gst_amount INT NOT NULL,
+  service_charge_amount INT NOT NULL,
+  total_amount INT NOT NULL,
+  payment_method VARCHAR(32) NOT NULL,
+  special_requests VARCHAR(1000) NULL,
+  status VARCHAR(32) NOT NULL,
+  cancelled_at TIMESTAMP NULL,
+  cancellation_refund_amount INT NULL,
+  cancellation_note VARCHAR(500) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_bookings_booking_id (booking_id),
+  UNIQUE KEY uk_bookings_invoice_id (invoice_id),
+  UNIQUE KEY uk_bookings_transaction_id (transaction_id),
+  KEY idx_bookings_user (customer_user_id),
+  KEY idx_bookings_room_dates (room_code, check_in_date, check_out_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- status values expected by the app: 'Pending', 'In Progress', 'Resolved'
+
+-- Room image path migration (.svg -> .png)
+UPDATE rooms SET image_url = '/assets/Standard.png' WHERE room_type = 'Standard';
+UPDATE rooms SET image_url = '/assets/Deluxe.png' WHERE room_type = 'Deluxe';
+UPDATE rooms SET image_url = '/assets/Suite.png' WHERE room_type = 'Suite';
+
+-- Unlock a locked account and reset failed attempts (use actual username)
+-- Example:
+-- UPDATE customers SET locked = 0, failed_attempts = 0 WHERE username = 'johndoe';

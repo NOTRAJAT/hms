@@ -1,0 +1,48 @@
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node
+node_modules/
+dist/
+.angular/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Java / Maven
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+.idea/
+.classpath
+.project
+.settings/
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Coverage
+coverage/
+*.lcov
+
+# Build
+out/
+build/
+tmp/
+
+# Monorepo module outputs
+SprintSix/node_modules/
+SprintSix/dist/
+SprintSix/.angular/
+backend/target/

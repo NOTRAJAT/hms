@@ -1,0 +1,126 @@
+<section class="mx-auto max-w-5xl px-6 py-10">
+  <div class="app-card p-8" *ngIf="context; else missing">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-semibold">Payment</h1>
+        <p class="mt-2 text-sm app-subtitle">
+          {{ isModificationPayment ? 'Complete payment to confirm booking modification.' : 'Complete your payment to confirm the booking.' }}
+        </p>
+      </div>
+      <div class="app-badge">Room: {{ context.roomType }}</div>
+    </div>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+      <div class="lg:col-span-2">
+        <form class="grid gap-4" [formGroup]="form" (ngSubmit)="pay()">
+          <div>
+            <label class="app-label" for="cardholderName">Cardholder Name</label>
+            <input id="cardholderName" type="text" formControlName="cardholderName" class="mt-1 app-input" />
+            <p *ngIf="form.get('cardholderName')?.touched && form.get('cardholderName')?.invalid" class="mt-1 text-xs text-rose-600">
+              Cardholder name must be 3-50 alphabetic characters.
+            </p>
+          </div>
+
+          <div>
+            <label class="app-label" for="cardNumber">Card Number</label>
+            <input id="cardNumber" type="text" inputmode="numeric" formControlName="cardNumber" class="mt-1 app-input" maxlength="16" />
+            <p *ngIf="form.get('cardNumber')?.touched && form.get('cardNumber')?.hasError('required')" class="mt-1 text-xs text-rose-600">
+              Card number is required.
+            </p>
+            <p *ngIf="form.get('cardNumber')?.touched && (form.get('cardNumber')?.hasError('pattern') || form.get('cardNumber')?.hasError('cardNumberInvalid'))" class="mt-1 text-xs text-rose-600">
+              Invalid card number.
+            </p>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label class="app-label" for="expiry">Expiry (MM/YY)</label>
+              <input
+                id="expiry"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9/]*"
+                formControlName="expiry"
+                class="mt-1 app-input"
+                placeholder="MM/YY"
+                maxlength="5"
+                (input)="formatExpiry()"
+              />
+              <p *ngIf="form.get('expiry')?.touched && form.get('expiry')?.hasError('expiryInvalid')" class="mt-1 text-xs text-rose-600">
+                Enter a valid expiry date (MM/YY).
+              </p>
+              <p *ngIf="form.get('expiry')?.touched && form.get('expiry')?.hasError('expiryPast')" class="mt-1 text-xs text-rose-600">
+                Card expiry date must be in the future.
+              </p>
+            </div>
+            <div>
+              <label class="app-label" for="cvv">CVV</label>
+              <input id="cvv" type="password" inputmode="numeric" formControlName="cvv" class="mt-1 app-input" maxlength="4" />
+              <p *ngIf="form.get('cvv')?.touched && form.get('cvv')?.invalid" class="mt-1 text-xs text-rose-600">
+                Invalid CVV. Please check again.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label class="app-label" for="billingAddress">Billing Address (Optional)</label>
+            <textarea id="billingAddress" rows="3" formControlName="billingAddress" class="mt-1 app-textarea"></textarea>
+            <p *ngIf="form.get('billingAddress')?.touched && form.get('billingAddress')?.hasError('minlength')" class="mt-1 text-xs text-rose-600">
+              Billing address must be at least 5 characters.
+            </p>
+          </div>
+
+          <div
+            *ngIf="message"
+            class="rounded-lg px-3 py-2 text-sm"
+            [class.border-rose-200]="messageType === 'error'"
+            [class.bg-rose-50]="messageType === 'error'"
+            [class.text-rose-700]="messageType === 'error'"
+            [class.border-amber-200]="messageType === 'warning'"
+            [class.bg-amber-50]="messageType === 'warning'"
+            [class.text-amber-800]="messageType === 'warning'"
+          >
+            {{ message }}
+          </div>
+
+          <div class="flex flex-wrap gap-3">
+            <button type="submit" class="app-button">
+              {{ isModificationPayment ? 'Pay Difference & Confirm' : 'Pay Now' }}
+            </button>
+            <button type="button" class="app-button-outline" (click)="retry()">Retry</button>
+          </div>
+        </form>
+      </div>
+
+      <div>
+        <div class="app-card p-6">
+          <h2 class="text-lg font-semibold">Summary</h2>
+          <div class="mt-4 text-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <span>Check-in</span>
+              <span>{{ context.checkIn }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Check-out</span>
+              <span>{{ context.checkOut }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Guests</span>
+              <span>{{ context.adults }} adults, {{ context.children }} children</span>
+            </div>
+            <div class="flex items-center justify-between" *ngIf="isModificationPayment">
+              <span>Additional Amount</span>
+              <span>INR {{ context.additionalAmount }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #missing>
+    <div class="app-card p-6">
+      <p class="text-sm app-subtitle">Payment details are missing. Please return to booking confirmation.</p>
+    </div>
+  </ng-template>
+</section>

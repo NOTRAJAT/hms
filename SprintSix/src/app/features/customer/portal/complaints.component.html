@@ -1,0 +1,109 @@
+<section class="mx-auto max-w-6xl px-6 py-10">
+  <div class="app-card p-8">
+    <h1 class="text-3xl font-semibold">Complaints</h1>
+    <p class="mt-2 text-sm app-subtitle">Register and track your complaints.</p>
+    <p *ngIf="errorMessage" class="mt-3 text-sm text-rose-600">{{ errorMessage }}</p>
+    <p *ngIf="successMessage" class="mt-3 text-sm text-emerald-700">{{ successMessage }}</p>
+
+    <div class="mt-5 flex flex-wrap gap-2">
+      <button class="app-button-outline" [class.app-button]="activeTab === 'register'" (click)="switchTab('register')">Register Complaint</button>
+      <button class="app-button-outline" [class.app-button]="activeTab === 'view'" (click)="switchTab('view')">View Complaints</button>
+    </div>
+
+    <form *ngIf="activeTab === 'register'" class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label class="app-label" for="category">Complaint Category</label>
+          <select id="category" formControlName="category" class="mt-1 app-select">
+            <option value="" disabled>Select Category</option>
+            <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="app-label" for="bookingId">Booking ID</label>
+          <select id="bookingId" formControlName="bookingId" class="mt-1 app-select">
+            <option value="" disabled>Select Booking ID</option>
+            <option *ngFor="let bookingId of bookingIds" [value]="bookingId">{{ bookingId }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="app-label" for="title">Complaint Title</label>
+        <input id="title" type="text" maxlength="100" formControlName="title" class="mt-1 app-input" />
+      </div>
+
+      <div>
+        <label class="app-label" for="description">Complaint Description</label>
+        <textarea id="description" rows="4" maxlength="500" formControlName="description" class="mt-1 app-textarea"></textarea>
+      </div>
+
+      <div>
+        <p class="app-label">Contact Preference</p>
+        <div class="mt-2 flex flex-wrap gap-4">
+          <label class="flex items-center gap-2 text-sm" *ngFor="let pref of contactPreferences">
+            <input type="radio" [value]="pref" formControlName="contactPreference" />
+            <span>{{ pref }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="submit" [disabled]="form.invalid || isSubmitting" class="app-button">
+          {{ editingComplaintId ? 'Update Complaint' : 'Submit Complaint' }}
+        </button>
+        <button type="button" class="app-button-outline" (click)="resetForm()">Reset</button>
+      </div>
+    </form>
+
+    <div class="mt-8" *ngIf="activeTab === 'view'">
+      <h2 class="text-lg font-semibold">View Complaints</h2>
+      <div *ngIf="complaints.length === 0" class="mt-3 text-sm app-subtitle">
+        You have not registered any complaints.
+      </div>
+      <div class="mt-4 space-y-3" *ngIf="complaints.length > 0">
+        <button
+          type="button"
+          class="w-full rounded-lg border border-[var(--border)] bg-white/70 p-4 text-left"
+          *ngFor="let complaint of complaints"
+          (click)="openComplaint(complaint.id)"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-semibold">{{ complaint.id }} · {{ complaint.title }}</p>
+              <p class="text-xs app-subtitle">Category: {{ complaint.category }} · Submitted: {{ complaint.createdAt | date:'dd-MM-yyyy' }}</p>
+              <p class="text-xs app-subtitle">Expected Resolution: {{ complaint.expectedResolutionDate }}</p>
+            </div>
+            <span
+              class="app-badge"
+              [ngClass]="{
+                'bg-amber-100 text-amber-800': complaint.status === 'Open',
+                'bg-blue-100 text-blue-800': complaint.status === 'In Progress',
+                'bg-emerald-100 text-emerald-800': complaint.status === 'Resolved',
+                'bg-slate-200 text-slate-700': complaint.status === 'Closed'
+              }"
+            >
+              {{ complaint.status }}
+            </span>
+          </div>
+        </button>
+      </div>
+
+      <div *ngIf="selectedComplaint" class="mt-6 rounded-lg border border-[var(--border)] bg-white p-5">
+        <h3 class="text-lg font-semibold">Complaint Details: {{ selectedComplaint.id }}</h3>
+        <p class="mt-2 text-sm"><span class="font-semibold">Description:</span> {{ selectedComplaint.description }}</p>
+        <p class="mt-2 text-sm"><span class="font-semibold">Support Response:</span> {{ selectedComplaint.supportResponse }}</p>
+        <p class="mt-2 text-sm"><span class="font-semibold">Resolution Notes:</span> {{ selectedComplaint.resolutionNotes }}</p>
+
+        <div class="mt-4 flex flex-wrap gap-2" *ngIf="selectedComplaint.status === 'Resolved'">
+          <button class="app-button" (click)="confirmResolution(selectedComplaint.id)">Confirm Resolution</button>
+          <button class="app-button-outline" (click)="reopenComplaint(selectedComplaint.id)">Reopen Complaint</button>
+        </div>
+
+        <div class="mt-3" *ngIf="selectedComplaint.status === 'Closed'">
+          <p class="text-xs text-slate-700">This complaint is closed and can no longer be edited.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

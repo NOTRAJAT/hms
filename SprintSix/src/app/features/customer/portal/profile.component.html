@@ -1,0 +1,96 @@
+<section class="mx-auto max-w-5xl px-6 py-10">
+  <div class="app-card p-8">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-3xl font-semibold">My Profile</h1>
+        <p class="mt-1 text-sm app-subtitle">Manage your account details.</p>
+      </div>
+      <button
+        class="app-button-outline"
+        (click)="logout()"
+      >
+        Logout
+      </button>
+    </div>
+
+    <div class="mt-6 grid gap-4 md:grid-cols-2" *ngIf="session.value as data">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-800/70">User ID</p>
+        <p class="text-sm">{{ data.userId }}</p>
+      </div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-800/70">Name</p>
+        <p class="text-sm">{{ data.name }}</p>
+      </div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-800/70">Email</p>
+        <p class="text-sm">{{ data.email }}</p>
+      </div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-800/70">Mobile</p>
+        <p class="text-sm">{{ data.mobile }}</p>
+      </div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-amber-800/70">Address</p>
+        <p class="text-sm">{{ data.address }}</p>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <button *ngIf="!isEditing" class="app-button" (click)="edit()">
+        Edit Profile
+      </button>
+    </div>
+
+    <p *ngIf="successMessage" class="mt-4 text-sm text-emerald-700">{{ successMessage }}</p>
+    <p *ngIf="errorMessage" class="mt-4 text-sm text-rose-600">{{ errorMessage }}</p>
+
+    <form class="mt-6 space-y-4" [formGroup]="form" *ngIf="isEditing">
+      <div>
+        <label class="app-label" for="userId">User ID</label>
+        <input id="userId" type="text" [value]="session.value?.userId ?? ''" class="mt-1 app-input bg-slate-100" disabled />
+      </div>
+      <div>
+        <label class="app-label" for="name">Full Name</label>
+        <input id="name" type="text" formControlName="name" class="mt-1 app-input" />
+        <p *ngIf="form.get('name')?.touched && form.get('name')?.invalid" class="mt-1 text-xs text-rose-600">
+          Full Name must be 2-50 letters and spaces only.
+        </p>
+        <p *ngIf="serverErrors['name']" class="mt-1 text-xs text-rose-600">{{ serverErrors['name'] }}</p>
+      </div>
+      <div>
+        <label class="app-label" for="email">Email</label>
+        <input id="email" type="email" formControlName="email" class="mt-1 app-input" />
+        <p *ngIf="form.get('email')?.touched && form.get('email')?.invalid" class="mt-1 text-xs text-rose-600">
+          Please enter a valid email address.
+        </p>
+        <p *ngIf="serverErrors['email']" class="mt-1 text-xs text-rose-600">{{ serverErrors['email'] }}</p>
+      </div>
+      <div>
+        <label class="app-label" for="mobile">Phone Number</label>
+        <input id="mobile" type="text" formControlName="mobile" class="mt-1 app-input" placeholder="+911234567890" (input)="mobileInput()" />
+        <p *ngIf="form.get('mobile')?.touched && form.get('mobile')?.invalid" class="mt-1 text-xs text-rose-600">
+          Please enter a valid phone number with country code.
+        </p>
+        <p *ngIf="serverErrors['mobile']" class="mt-1 text-xs text-rose-600">{{ serverErrors['mobile'] }}</p>
+      </div>
+      <div>
+        <label class="app-label" for="address">Address</label>
+        <textarea id="address" rows="2" formControlName="address" class="mt-1 app-textarea"></textarea>
+        <p *ngIf="form.get('address')?.touched && form.get('address')?.invalid" class="mt-1 text-xs text-rose-600">
+          Address must be 100 characters or fewer.
+        </p>
+        <p *ngIf="serverErrors['address']" class="mt-1 text-xs text-rose-600">{{ serverErrors['address'] }}</p>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button type="button" (click)="save()" [disabled]="form.invalid || isSaving" class="app-button">
+          Save Changes
+        </button>
+        <button type="button" class="app-button-outline" (click)="cancel()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
