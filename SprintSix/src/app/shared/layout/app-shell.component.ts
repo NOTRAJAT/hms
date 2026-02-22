@@ -11,4 +11,12 @@ import { AuthSessionService } from '../../core/services/auth-session.service';
 })
 export class AppShellComponent {
   constructor(public session: AuthSessionService) {}
+
+  get isAdmin(): boolean {
+    return this.session.value?.role === 'ADMIN';
+  }
+
+  get isStaff(): boolean {
+    return this.session.value?.role === 'STAFF';
+  }
 }

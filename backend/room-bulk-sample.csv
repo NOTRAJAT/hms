@@ -1,0 +1,5 @@
+roomType,price,amenities,availability,occupancyAdults,occupancyChildren,description,bedType
+Standard,6000,"WiFi, TV, AC",Available,2,0,"BULK_DEMO_20260221 Standard room",Queen
+Deluxe,8000,"WiFi, TV, Mini-bar, AC",Available,2,1,"BULK_DEMO_20260221 Deluxe room",King
+Suite,14000,"WiFi, TV, Mini-bar, AC, Balcony, Breakfast",Available,3,1,"BULK_DEMO_20260221 Suite room",King
+Supreme,16000,"WiFi, TV, Mini-bar, AC, Balcony",Not Available,3,1,"BULK_DEMO_20260221 Supreme room",King

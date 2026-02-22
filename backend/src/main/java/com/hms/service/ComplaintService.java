@@ -3,12 +3,20 @@ package com.hms.service;
 import com.hms.api.ApiException;
 import com.hms.api.dto.ComplaintRequest;
 import com.hms.api.dto.ComplaintResponse;
+import com.hms.api.dto.ComplaintCheckpointResponse;
 import com.hms.domain.Complaint;
+import com.hms.repo.CustomerRepository;
+import com.hms.repo.ComplaintActionLogRepository;
 import com.hms.repo.BookingRepository;
 import com.hms.repo.ComplaintRepository;
+import com.hms.repo.StaffRepository;
 import java.security.SecureRandom;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,10 +31,22 @@ public class ComplaintService {
 
   private final ComplaintRepository repository;
   private final BookingRepository bookingRepository;
+  private final ComplaintActionLogRepository complaintActionLogRepository;
+  private final CustomerRepository customerRepository;
+  private final StaffRepository staffRepository;
 
-  public ComplaintService(ComplaintRepository repository, BookingRepository bookingRepository) {
+  public ComplaintService(
+      ComplaintRepository repository,
+      BookingRepository bookingRepository,
+      ComplaintActionLogRepository complaintActionLogRepository,
+      CustomerRepository customerRepository,
+      StaffRepository staffRepository
+  ) {
     this.repository = repository;
     this.bookingRepository = bookingRepository;
+    this.complaintActionLogRepository = complaintActionLogRepository;
+    this.customerRepository = customerRepository;
+    this.staffRepository = staffRepository;
   }
 
   @Transactional(readOnly = true)
@@ -62,6 +82,8 @@ public class ComplaintService {
     complaint.setDescription(request.getDescription().trim());
     complaint.setContactPreference(request.getContactPreference().trim());
     complaint.setStatus(Complaint.Status.Open);
+    complaint.setEscalated(false);
+    complaint.setPriorityLevel(priorityForCategory(complaint.getCategory()));
 
     repository.save(complaint);
     logAcknowledgement(complaint);
@@ -82,6 +104,7 @@ public class ComplaintService {
     complaint.setTitle(request.getTitle().trim());
     complaint.setDescription(request.getDescription().trim());
     complaint.setContactPreference(request.getContactPreference().trim());
+    complaint.setPriorityLevel(priorityForCategory(complaint.getCategory()));
 
     repository.save(complaint);
     return toResponse(complaint);
@@ -152,7 +175,30 @@ public class ComplaintService {
   }
 
   private ComplaintResponse toResponse(Complaint complaint) {
-    String statusLabel = toStatusLabel(complaint.getStatus());
+    String statusLabel = toStatusLabel(complaint);
+    Map<String, String> actorNames = loadActorNames();
+    List<ComplaintCheckpointResponse> updates = complaintActionLogRepository
+        .findByComplaintIdOrderByActionAtDesc(complaint.getComplaintId()).stream()
+        .filter(log -> "CHECKPOINT_UPDATED".equalsIgnoreCase(log.getActionType()) || startsWithCheckpoint(log.getActionDetails()))
+        .filter(log -> log.getActionDetails() != null && !log.getActionDetails().isBlank())
+        .map(log -> new ComplaintCheckpointResponse(
+            log.getActionAt(),
+            log.getToStatus() == null || log.getToStatus().isBlank() ? statusLabel : log.getToStatus(),
+            checkpointMessage(log.getActionDetails()),
+            actorDisplayName(log.getActorUserId(), actorNames)
+        ))
+        .toList();
+    String latestSupport = complaint.getSupportResponse() == null ? "" : complaint.getSupportResponse().trim();
+    if (updates.isEmpty() && !latestSupport.isBlank() && !"No response from support team yet.".equalsIgnoreCase(latestSupport)) {
+      List<ComplaintCheckpointResponse> fallback = new ArrayList<>();
+      fallback.add(new ComplaintCheckpointResponse(
+          complaint.getUpdatedAt() == null ? complaint.getCreatedAt() : complaint.getUpdatedAt(),
+          statusLabel,
+          latestSupport,
+          "Support Team"
+      ));
+      updates = fallback;
+    }
     return new ComplaintResponse(
         complaint.getComplaintId(),
         complaint.getUserId(),
@@ -172,11 +218,16 @@ public class ComplaintService {
             complaint.getContactPreference()
         ),
         complaint.getSupportResponse() == null ? "No response from support team yet." : complaint.getSupportResponse(),
-        complaint.getResolutionNotes() == null ? "Resolution notes will appear once the complaint is resolved." : complaint.getResolutionNotes()
+        "",
+        updates
     );
   }
 
-  private String toStatusLabel(Complaint.Status status) {
+  private String toStatusLabel(Complaint complaint) {
+    if (complaint.isEscalated() && complaint.getStatus() == Complaint.Status.In_Progress) {
+      return "Escalated";
+    }
+    Complaint.Status status = complaint.getStatus();
     return switch (status) {
       case Pending -> "Open";
       case Open -> "Open";
@@ -200,5 +251,48 @@ public class ComplaintService {
         complaint.getContactPreference(),
         complaint.getComplaintId()
     );
+  }
+
+  private String checkpointMessage(String raw) {
+    if (raw == null) {
+      return "";
+    }
+    String value = raw.trim();
+    String prefix = "checkpoint update:";
+    if (value.toLowerCase(Locale.ROOT).startsWith(prefix)) {
+      return value.substring(prefix.length()).trim();
+    }
+    return value;
+  }
+
+  private boolean startsWithCheckpoint(String raw) {
+    if (raw == null) {
+      return false;
+    }
+    return raw.trim().toLowerCase(Locale.ROOT).startsWith("checkpoint update:");
+  }
+
+  private Map<String, String> loadActorNames() {
+    Map<String, String> names = new HashMap<>();
+    customerRepository.findAll().forEach(customer -> names.put(customer.getUserId(), customer.getName()));
+    staffRepository.findAll().forEach(staff -> names.put(staff.getUserId(), staff.getName()));
+    return names;
+  }
+
+  private String actorDisplayName(String actorUserId, Map<String, String> actorNames) {
+    if (actorUserId == null || actorUserId.isBlank()) {
+      return "Support Team";
+    }
+    String userId = actorUserId.trim();
+    return actorNames.getOrDefault(userId, userId);
+  }
+
+  private String priorityForCategory(String category) {
+    String normalized = category == null ? "" : category.trim().toLowerCase(Locale.ROOT);
+    return switch (normalized) {
+      case "billing issue", "room issue" -> "High";
+      case "service issue" -> "Medium";
+      default -> "Low";
+    };
   }
 }

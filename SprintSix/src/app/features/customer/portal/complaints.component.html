@@ -10,7 +10,7 @@
       <button class="app-button-outline" [class.app-button]="activeTab === 'view'" (click)="switchTab('view')">View Complaints</button>
     </div>
 
-    <form *ngIf="activeTab === 'register'" class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+    <!-- <form *ngIf="activeTab === 'register'" class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
       <div class="grid gap-4 md:grid-cols-2">
         <div>
           <label class="app-label" for="category">Complaint Category</label>
@@ -54,7 +54,121 @@
         </button>
         <button type="button" class="app-button-outline" (click)="resetForm()">Reset</button>
       </div>
-    </form>
+    </form> -->
+<form *ngIf="activeTab === 'register'" 
+      class="mt-6 space-y-4" 
+      [formGroup]="form" 
+      (ngSubmit)="submit()">
+
+  <div class="grid gap-4 md:grid-cols-2">
+
+    <!-- CATEGORY -->
+    <div>
+      <label class="app-label" for="category">Complaint Category</label>
+      <select id="category" formControlName="category" class="mt-1 app-select">
+        <option value="" disabled>Select Category</option>
+        <option *ngFor="let category of categories" [value]="category">
+          {{ category }}
+        </option>
+      </select>
+
+      <p class="text-xs text-rose-600 mt-1"
+         *ngIf="form.get('category')?.touched && form.get('category')?.invalid">
+        Category is required.
+      </p>
+    </div>
+
+    <!-- BOOKING ID -->
+    <div>
+      <label class="app-label" for="bookingId">Booking ID</label>
+      <select id="bookingId" formControlName="bookingId" class="mt-1 app-select">
+        <option value="" disabled>Select Booking ID</option>
+        <option *ngFor="let bookingId of bookingIds" [value]="bookingId">
+          {{ bookingId }}
+        </option>
+      </select>
+
+      <p class="text-xs text-rose-600 mt-1"
+         *ngIf="form.get('bookingId')?.touched && form.get('bookingId')?.invalid">
+        Booking ID is required.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- TITLE -->
+  <div>
+    <label class="app-label" for="title">Complaint Title</label>
+    <input id="title" type="text" maxlength="100"
+           formControlName="title"
+           class="mt-1 app-input" />
+
+    <p class="text-xs text-rose-600 mt-1"
+       *ngIf="form.get('title')?.touched && form.get('title')?.errors?.['required']">
+      Title is required.
+    </p>
+
+    <p class="text-xs text-rose-600 mt-1"
+       *ngIf="form.get('title')?.touched && form.get('title')?.errors?.['minlength']">
+      Title must be at least 10 characters.
+    </p>
+  </div>
+
+  <!-- DESCRIPTION -->
+  <div>
+    <label class="app-label" for="description">Complaint Description</label>
+    <textarea id="description"
+              rows="4"
+              maxlength="500"
+              formControlName="description"
+              class="mt-1 app-textarea"></textarea>
+
+    <p class="text-xs text-rose-600 mt-1"
+       *ngIf="form.get('description')?.touched && form.get('description')?.errors?.['required']">
+      Description is required.
+    </p>
+
+    <p class="text-xs text-rose-600 mt-1"
+       *ngIf="form.get('description')?.touched && form.get('description')?.errors?.['minlength']">
+      Description must be at least 20 characters.
+    </p>
+  </div>
+
+  <!-- CONTACT PREFERENCE -->
+  <div>
+    <p class="app-label">Contact Preference</p>
+    <div class="mt-2 flex flex-wrap gap-4">
+      <label class="flex items-center gap-2 text-sm"
+             *ngFor="let pref of contactPreferences">
+        <input type="radio"
+               [value]="pref"
+               formControlName="contactPreference" />
+        <span>{{ pref }}</span>
+      </label>
+    </div>
+
+    <p class="text-xs text-rose-600 mt-1"
+       *ngIf="form.get('contactPreference')?.touched && form.get('contactPreference')?.invalid">
+      Please select a contact preference.
+    </p>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="flex flex-wrap items-center gap-2">
+    <button type="submit"
+            [disabled]="form.invalid || isSubmitting"
+            class="app-button">
+      {{ editingComplaintId ? 'Update Complaint' : 'Submit Complaint' }}
+    </button>
+
+    <button type="button"
+            class="app-button-outline"
+            (click)="resetForm()">
+      Reset
+    </button>
+  </div>
+
+</form>
 
     <div class="mt-8" *ngIf="activeTab === 'view'">
       <h2 class="text-lg font-semibold">View Complaints</h2>
@@ -79,6 +193,7 @@
               [ngClass]="{
                 'bg-amber-100 text-amber-800': complaint.status === 'Open',
                 'bg-blue-100 text-blue-800': complaint.status === 'In Progress',
+                'bg-fuchsia-100 text-fuchsia-800': complaint.status === 'Escalated',
                 'bg-emerald-100 text-emerald-800': complaint.status === 'Resolved',
                 'bg-slate-200 text-slate-700': complaint.status === 'Closed'
               }"
@@ -92,8 +207,54 @@
       <div *ngIf="selectedComplaint" class="mt-6 rounded-lg border border-[var(--border)] bg-white p-5">
         <h3 class="text-lg font-semibold">Complaint Details: {{ selectedComplaint.id }}</h3>
         <p class="mt-2 text-sm"><span class="font-semibold">Description:</span> {{ selectedComplaint.description }}</p>
-        <p class="mt-2 text-sm"><span class="font-semibold">Support Response:</span> {{ selectedComplaint.supportResponse }}</p>
-        <p class="mt-2 text-sm"><span class="font-semibold">Resolution Notes:</span> {{ selectedComplaint.resolutionNotes }}</p>
+        <p class="mt-2 text-sm"><span class="font-semibold">Latest Support Response:</span> {{ selectedComplaint.supportResponse }}</p>
+        <div class="mt-4 rounded-lg border border-[var(--border)] bg-white/70 p-4">
+          <p class="text-sm font-semibold">Checkpoint Updates</p>
+          <div class="mt-2 space-y-2" *ngIf="selectedComplaint.checkpointUpdates?.length; else noCheckpointUpdates">
+            <div
+              class="relative rounded-md border p-3 pl-5 text-sm"
+              *ngFor="let update of selectedComplaint.checkpointUpdates"
+              [ngClass]="{
+                'border-amber-200 bg-amber-50/60': update.status === 'Open',
+                'border-blue-200 bg-blue-50/60': update.status === 'In Progress',
+                'border-fuchsia-200 bg-fuchsia-50/60': update.status === 'Escalated',
+                'border-emerald-200 bg-emerald-50/60': update.status === 'Resolved',
+                'border-slate-200 bg-slate-50/80': update.status === 'Closed'
+              }"
+            >
+              <span
+                class="absolute left-2 top-4 h-2.5 w-2.5 rounded-full"
+                [ngClass]="{
+                  'bg-amber-500': update.status === 'Open',
+                  'bg-blue-500': update.status === 'In Progress',
+                  'bg-fuchsia-500': update.status === 'Escalated',
+                  'bg-emerald-500': update.status === 'Resolved',
+                  'bg-slate-500': update.status === 'Closed'
+                }"
+              ></span>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded-full px-2 py-0.5 text-xs font-semibold"
+                  [ngClass]="{
+                    'bg-amber-100 text-amber-800': update.status === 'Open',
+                    'bg-blue-100 text-blue-800': update.status === 'In Progress',
+                    'bg-fuchsia-100 text-fuchsia-800': update.status === 'Escalated',
+                    'bg-emerald-100 text-emerald-800': update.status === 'Resolved',
+                    'bg-slate-200 text-slate-700': update.status === 'Closed'
+                  }"
+                >
+                  {{ update.status }}
+                </span>
+                <span class="text-xs text-slate-600">{{ update.updatedAt | date:'dd-MM-yyyy HH:mm' }}</span>
+              </div>
+              <p class="mt-2 text-sm">
+                <span class="font-semibold">Support Response ({{ update.actorName || 'Support Team' }}):</span> {{ update.message }}
+              </p>
+            </div>
+          </div>
+          <ng-template #noCheckpointUpdates>
+            <p class="mt-2 text-sm app-subtitle">No checkpoint updates yet.</p>
+          </ng-template>
+        </div>
 
         <div class="mt-4 flex flex-wrap gap-2" *ngIf="selectedComplaint.status === 'Resolved'">
           <button class="app-button" (click)="confirmResolution(selectedComplaint.id)">Confirm Resolution</button>

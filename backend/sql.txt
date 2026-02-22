@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS complaints (
   expected_resolution_date DATE NOT NULL,
   support_response VARCHAR(1000) NULL,
   resolution_notes VARCHAR(1000) NULL,
+  priority_level VARCHAR(20) NULL,
+  escalated BIT(1) NOT NULL DEFAULT b'0',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uk_complaints_complaint_id (complaint_id)
@@ -76,6 +78,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   occupancy_children INT NOT NULL,
   price_per_night INT NOT NULL,
   check_in_date DATE NOT NULL,
+  original_check_in_date DATE NULL,
   check_out_date DATE NOT NULL,
   nights INT NOT NULL,
   adults INT NOT NULL,
@@ -100,6 +103,16 @@ CREATE TABLE IF NOT EXISTS bookings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- status values expected by the app: 'Pending', 'In Progress', 'Resolved'
+-- Staff workflow enhancements:
+-- - Priority levels: High / Medium / Low (stored in complaints.priority_level)
+-- - Escalated state is supported (stored in complaints.escalated = 1)
+
+-- Safe migration for existing deployments
+ALTER TABLE complaints ADD COLUMN IF NOT EXISTS priority_level VARCHAR(20) NULL;
+ALTER TABLE complaints ADD COLUMN IF NOT EXISTS escalated BIT(1) NOT NULL DEFAULT b'0';
+UPDATE complaints SET priority_level = 'Medium' WHERE priority_level IS NULL OR TRIM(priority_level) = '';
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS original_check_in_date DATE NULL;
+UPDATE bookings SET original_check_in_date = check_in_date WHERE original_check_in_date IS NULL;
 
 -- Room image path migration (.svg -> .png)
 UPDATE rooms SET image_url = '/assets/Standard.png' WHERE room_type = 'Standard';
@@ -109,3 +122,14 @@ UPDATE rooms SET image_url = '/assets/Suite.png' WHERE room_type = 'Suite';
 -- Unlock a locked account and reset failed attempts (use actual username)
 -- Example:
 -- UPDATE customers SET locked = 0, failed_attempts = 0 WHERE username = 'johndoe';
+
+# 1 Create checkpoint (backup)
+mysqldump -u me -p'TCS#123' hms > hms_checkpoint.sql
+
+
+# 2 Rollback to that checkpoint
+mysql -u me -p'TCS#123' -e "DROP DATABASE IF EXISTS hms; CREATE DATABASE hms;"
+mysql -u me -p'TCS#123' hms < hms_checkpoint.sql
+
+
+mysqldump -u me -p'TCS#123' hms > hms_checkpoint_$(date +%Y%m%d_%H%M%S).sql

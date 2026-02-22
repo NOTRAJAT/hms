@@ -71,6 +71,9 @@ public class Booking {
   @Column(nullable = false)
   private LocalDate checkInDate;
 
+  @Column(nullable = true)
+  private LocalDate originalCheckInDate;
+
   @Column(nullable = false)
   private LocalDate checkOutDate;
 
@@ -98,6 +101,9 @@ public class Booking {
   @Column(nullable = false)
   private String paymentMethod;
 
+  @Column(nullable = false, columnDefinition = "varchar(20) default 'PAID'")
+  private String paymentStatus;
+
   @Column(length = 1000)
   private String specialRequests;
 
@@ -119,6 +125,9 @@ public class Booking {
   void onCreate() {
     if (createdAt == null) {
       createdAt = Instant.now();
+    }
+    if (originalCheckInDate == null) {
+      originalCheckInDate = checkInDate;
     }
   }
 
@@ -238,6 +247,14 @@ public class Booking {
     this.checkOutDate = checkOutDate;
   }
 
+  public LocalDate getOriginalCheckInDate() {
+    return originalCheckInDate;
+  }
+
+  public void setOriginalCheckInDate(LocalDate originalCheckInDate) {
+    this.originalCheckInDate = originalCheckInDate;
+  }
+
   public int getNights() {
     return nights;
   }
@@ -300,6 +317,14 @@ public class Booking {
 
   public void setPaymentMethod(String paymentMethod) {
     this.paymentMethod = paymentMethod;
+  }
+
+  public String getPaymentStatus() {
+    return paymentStatus;
+  }
+
+  public void setPaymentStatus(String paymentStatus) {
+    this.paymentStatus = paymentStatus;
   }
 
   public String getSpecialRequests() {

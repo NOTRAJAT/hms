@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
   List<Complaint> findByUserIdOrderByCreatedAtDesc(String userId);
   Optional<Complaint> findByComplaintIdAndUserId(String complaintId, String userId);
+  Optional<Complaint> findByComplaintId(String complaintId);
 }

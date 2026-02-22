@@ -24,6 +24,9 @@ public class Room {
   @Column(nullable = false)
   private String roomType;
 
+  @Column
+  private String bedType;
+
   @Column(nullable = false)
   private int pricePerNight;
 
@@ -39,11 +42,17 @@ public class Room {
   @Column(nullable = false)
   private int roomSizeSqFt;
 
+  @Column(length = 500)
+  private String description;
+
   @Column(nullable = false)
   private String imageUrl;
 
   @Column(nullable = false)
   private boolean active;
+
+  @Column
+  private String roomStatus;
 
   public Long getId() {
     return id;
@@ -63,6 +72,14 @@ public class Room {
 
   public void setRoomType(String roomType) {
     this.roomType = roomType;
+  }
+
+  public String getBedType() {
+    return bedType;
+  }
+
+  public void setBedType(String bedType) {
+    this.bedType = bedType;
   }
 
   public int getPricePerNight() {
@@ -105,6 +122,14 @@ public class Room {
     this.roomSizeSqFt = roomSizeSqFt;
   }
 
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
   public String getImageUrl() {
     return imageUrl;
   }
@@ -119,5 +144,13 @@ public class Room {
 
   public void setActive(boolean active) {
     this.active = active;
+  }
+
+  public String getRoomStatus() {
+    return roomStatus;
+  }
+
+  public void setRoomStatus(String roomStatus) {
+    this.roomStatus = roomStatus;
   }
 }

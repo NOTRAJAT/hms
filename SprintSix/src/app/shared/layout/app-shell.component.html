@@ -7,27 +7,65 @@
       </div>
 
       <nav class="flex flex-wrap items-center gap-2 text-sm font-medium" *ngIf="session.value; else publicNav">
-        <a routerLink="/dashboard" routerLinkActive="app-pill-active" class="app-pill">
-          Home
-        </a>
-        <a routerLink="/search" routerLinkActive="app-pill-active" class="app-pill">
-          Search Room Availability
-        </a>
-        <a routerLink="/bookings" routerLinkActive="app-pill-active" class="app-pill">
-          Booking History
-        </a>
-        <a routerLink="/contact" routerLinkActive="app-pill-active" class="app-pill">
-          Contact Us
-        </a>
-        <a routerLink="/complaints" routerLinkActive="app-pill-active" class="app-pill">
-          Register Complaint
-        </a>
-        <a routerLink="/complaints/view" routerLinkActive="app-pill-active" class="app-pill">
-          View Complaints
-        </a>
-        <a routerLink="/profile" routerLinkActive="app-pill-active" class="app-pill">
-          Profile
-        </a>
+        <ng-container *ngIf="isAdmin; else nonAdminNav">
+          <a routerLink="/admin/home" routerLinkActive="app-pill-active" class="app-pill">
+            Home
+          </a>
+          <a routerLink="/admin/rooms" routerLinkActive="app-pill-active" class="app-pill">
+            Room Management
+          </a>
+          <a routerLink="/admin/bookings" routerLinkActive="app-pill-active" class="app-pill">
+            Booking Management
+          </a>
+          <a routerLink="/admin/complaints" routerLinkActive="app-pill-active" class="app-pill">
+            Complaint Dashboard
+          </a>
+          <a routerLink="/admin/bills" routerLinkActive="app-pill-active" class="app-pill">
+            Billing Management
+          </a>
+          <a routerLink="/admin/users" routerLinkActive="app-pill-active" class="app-pill">
+            User Management
+          </a>
+          <a routerLink="/admin/reports" routerLinkActive="app-pill-active" class="app-pill">
+            Reports and Analytics
+          </a>
+          <a routerLink="/profile" routerLinkActive="app-pill-active" class="app-pill">
+            Profile
+          </a>
+        </ng-container>
+        <ng-template #nonAdminNav>
+          <ng-container *ngIf="isStaff; else customerNav">
+            <a routerLink="/admin/complaints" routerLinkActive="app-pill-active" class="app-pill">
+              Complaint Dashboard
+            </a>
+            <a routerLink="/profile" routerLinkActive="app-pill-active" class="app-pill">
+              Profile
+            </a>
+          </ng-container>
+        </ng-template>
+        <ng-template #customerNav>
+          <a routerLink="/dashboard" routerLinkActive="app-pill-active" class="app-pill">
+            Home
+          </a>
+          <a routerLink="/search" routerLinkActive="app-pill-active" class="app-pill">
+            Search Room Availability
+          </a>
+          <a routerLink="/bookings" routerLinkActive="app-pill-active" class="app-pill">
+            Booking History
+          </a>
+          <a routerLink="/contact" routerLinkActive="app-pill-active" class="app-pill">
+            Contact Us
+          </a>
+          <a routerLink="/complaints" routerLinkActive="app-pill-active" class="app-pill">
+            Register Complaint
+          </a>
+          <a routerLink="/complaints/view" routerLinkActive="app-pill-active" class="app-pill">
+            View Complaints
+          </a>
+          <a routerLink="/profile" routerLinkActive="app-pill-active" class="app-pill">
+            Profile
+          </a>
+        </ng-template>
       </nav>
 
       <ng-template #publicNav>
@@ -40,6 +78,9 @@
           </a>
           <a routerLink="/login" routerLinkActive="app-pill-active" class="app-pill">
             Login
+          </a>
+          <a routerLink="/admin" routerLinkActive="app-pill-active" class="app-pill">
+            Admin / Staff Login
           </a>
         </nav>
       </ng-template>

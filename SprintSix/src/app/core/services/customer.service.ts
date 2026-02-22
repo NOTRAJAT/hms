@@ -12,6 +12,11 @@ export interface CustomerProfileUpdate {
   address: string;
 }
 
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
   private readonly baseUrl: string;
@@ -31,7 +36,24 @@ export class CustomerService {
     return this.http.post<LoginResult>(`${this.baseUrl}/login`, payload);
   }
 
+  logout(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/logout`, {});
+  }
+
+  me(): Observable<LoginResult> {
+    return this.http.get<LoginResult>(`${this.baseUrl}/me`);
+  }
+
+  csrf(): Observable<unknown> {
+    const authBase = this.baseUrl.replace(/\/customers$/, '/auth');
+    return this.http.get(`${authBase}/csrf`);
+  }
+
   updateProfile(userId: string, payload: CustomerProfileUpdate): Observable<LoginResult> {
     return this.http.put<LoginResult>(`${this.baseUrl}/${userId}`, payload);
+  }
+
+  changePassword(payload: ChangePasswordPayload): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/change-password`, payload);
   }
 }

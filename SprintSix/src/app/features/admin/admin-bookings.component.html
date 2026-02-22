@@ -1,0 +1,294 @@
+<section class="mx-auto max-w-7xl px-6 py-10">
+  <div class="app-card p-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-semibold">Reservation Management</h1>
+      <button class="app-button px-5 py-2 text-sm" (click)="openCreate()">Create Reservation</button>
+    </div>
+
+    <div class="mt-4 grid gap-3 md:grid-cols-4">
+      <div>
+        <input [(ngModel)]="q" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Reservation ID / Customer Name" />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="searchTextInvalid">Use only letters, numbers, spaces, and hyphen.</p>
+      </div>
+      <div>
+        <input [(ngModel)]="roomCode" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Room Number" />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="roomCodeInvalid">Room number can use only letters, numbers, and hyphen.</p>
+      </div>
+      <select [(ngModel)]="status" class="rounded-xl border border-stone-300 px-3 py-2 text-sm">
+        <option value="">All Status</option>
+        <option value="Confirmed">Confirmed</option>
+        <option value="Checked-in">Checked-in</option>
+        <option value="Checked-out">Checked-out</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+      <select [(ngModel)]="roomType" class="rounded-xl border border-stone-300 px-3 py-2 text-sm">
+        <option value="">All Room Types</option>
+        <option value="Standard">Standard</option>
+        <option value="Deluxe">Deluxe</option>
+        <option value="Suite">Suite</option>
+        <option value="Supreme">Supreme</option>
+      </select>
+      <input [(ngModel)]="bookingDate" type="date" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" />
+      <input [(ngModel)]="fromDate" type="date" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" />
+      <input [(ngModel)]="toDate" type="date" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" />
+      <div class="md:col-span-3">
+        <button class="app-button px-5 py-2 text-sm" (click)="load(true)" [disabled]="searchTextInvalid || roomCodeInvalid">Apply Filters</button>
+      </div>
+    </div>
+
+    <p class="mt-3 text-sm text-emerald-700" *ngIf="successMessage">{{ successMessage }}</p>
+    <p class="mt-3 text-sm text-rose-700" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </div>
+
+  <div class="app-card mt-6 p-6" *ngIf="createMode">
+    <h2 class="text-xl font-semibold">Create New Reservation</h2>
+    <div class="mt-4 grid gap-3 md:grid-cols-2">
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Full Name</label>
+        <input
+          [(ngModel)]="createForm.customerName"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          placeholder="Full Name"
+          (blur)="touchCreateField('customerName')"
+        />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="(createTouched.customerName || createSubmitted) && createForm.customerName.trim().length < 2">Name must be at least 2 characters.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Email</label>
+        <input
+          [(ngModel)]="createForm.customerEmail"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          placeholder="Email"
+          (blur)="touchCreateField('customerEmail')"
+        />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="(createTouched.customerEmail || createSubmitted) && createEmailInvalid">Enter a valid email address.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Phone Number (Country Code)</label>
+        <input
+          [(ngModel)]="createForm.customerMobile"
+          type="tel"
+          inputmode="numeric"
+          maxlength="16"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          placeholder="Phone with country code"
+          (blur)="touchCreateField('customerMobile')"
+          (keydown)="blockPhoneInput($event)"
+          (input)="sanitizeCreateMobile()"
+        />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="(createTouched.customerMobile || createSubmitted) && createMobileInvalid">Enter a valid phone number with country code.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Check-in Date</label>
+        <input
+          [(ngModel)]="createForm.checkInDate"
+          type="date"
+          [min]="today"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          (blur)="touchCreateField('checkInDate')"
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Check-out Date</label>
+        <input
+          [(ngModel)]="createForm.checkOutDate"
+          type="date"
+          [min]="createForm.checkInDate || today"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          (blur)="touchCreateField('checkOutDate')"
+        />
+      </div>
+      <p class="text-xs text-rose-700 md:col-span-2" *ngIf="(createTouched.checkInDate || createTouched.checkOutDate || createSubmitted) && createDateInvalid">Check-in and check-out dates are invalid.</p>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Adults</label>
+        <input
+          [(ngModel)]="createForm.adults"
+          type="number"
+          min="1"
+          max="10"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          placeholder="Adults (1-10)"
+          (keydown)="blockNegativeInput($event)"
+          (input)="sanitizeCreateInt('adults')"
+          (blur)="touchCreateField('adults')"
+        />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="(createTouched.adults || createSubmitted) && createAdultsInvalid">Adults must be 1 to 10.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Children</label>
+        <input
+          [(ngModel)]="createForm.children"
+          type="number"
+          min="0"
+          max="5"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          placeholder="Children (0-5)"
+          (keydown)="blockNegativeInput($event)"
+          (input)="sanitizeCreateInt('children')"
+          (blur)="touchCreateField('children')"
+        />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="(createTouched.children || createSubmitted) && createChildrenInvalid">Children must be 0 to 5.</p>
+      </div>
+      <p class="text-xs text-rose-700 md:col-span-2" *ngIf="(createTouched.adults || createTouched.children || createSubmitted) && createGuestTotalInvalid">Adults + children cannot exceed 10.</p>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Room Type</label>
+        <select [(ngModel)]="createForm.roomType" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm">
+          <option value="Standard">Standard</option>
+          <option value="Deluxe">Deluxe</option>
+          <option value="Suite">Suite</option>
+          <option value="Supreme">Supreme</option>
+        </select>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Preferred Room Number (Optional)</label>
+        <input [(ngModel)]="createForm.roomCode" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Preferred room number (optional)" />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Payment Method</label>
+        <select [(ngModel)]="createForm.paymentMethod" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm">
+          <option value="Credit Card">Credit Card</option>
+          <option value="Debit Card">Debit Card</option>
+          <option value="UPI">UPI</option>
+          <option value="Cash">Cash</option>
+        </select>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Deposit Amount (Optional)</label>
+        <input
+          [(ngModel)]="createForm.depositAmount"
+          type="number"
+          min="0"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          placeholder="Deposit amount (optional)"
+          (keydown)="blockNegativeInput($event)"
+          (input)="sanitizeCreateInt('depositAmount')"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Special Requests / Notes</label>
+        <textarea [(ngModel)]="createForm.specialRequests" rows="3" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Special requests / notes"></textarea>
+      </div>
+    </div>
+
+    <div class="mt-4 flex gap-2">
+      <button class="app-button px-5" (click)="submitCreate()" [disabled]="!isCreateFormValid || submittingCreate">
+        {{ submittingCreate ? 'Saving...' : 'Save Reservation' }}
+      </button>
+      <button class="app-button-outline px-5" (click)="closeCreate()">Close</button>
+    </div>
+  </div>
+
+  <div class="app-card mt-6 overflow-x-auto p-4">
+    <table class="min-w-full text-sm">
+      <thead>
+        <tr class="text-left text-stone-600">
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('bookingId')">Reservation ID</th>
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('customerName')">Customer</th>
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('roomCode')">Room</th>
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('checkInDate')">Check-in</th>
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('checkOutDate')">Check-out</th>
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('status')">Status</th>
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('totalAmount')">Total Amount</th>
+          <th class="px-2 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let booking of bookings" class="border-t border-stone-200">
+          <td class="px-2 py-2">{{ booking.bookingId }}</td>
+          <td class="px-2 py-2">{{ booking.customerName }}</td>
+          <td class="px-2 py-2">{{ booking.roomCode }} ({{ booking.roomType }})</td>
+          <td class="px-2 py-2">{{ booking.checkInDate | date: 'dd-MM-yyyy' }}</td>
+          <td class="px-2 py-2">{{ booking.checkOutDate | date: 'dd-MM-yyyy' }}</td>
+          <td class="px-2 py-2">{{ booking.status }}</td>
+          <td class="px-2 py-2">INR {{ booking.totalAmount }}</td>
+          <td class="px-2 py-2">
+            <div class="flex flex-wrap gap-2">
+              <button class="app-button px-3 py-1 text-xs" (click)="startEdit(booking)" [disabled]="!canEdit(booking)">Edit</button>
+              <button class="app-button-outline px-3 py-1 text-xs" (click)="openCancel(booking)" [disabled]="!canCancel(booking)">Cancel</button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="!bookings.length">
+          <td colspan="8" class="px-2 py-5 text-center text-stone-600">
+            {{ loading ? 'Loading reservations...' : 'No bookings found.' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="mt-4 flex items-center justify-between text-sm">
+      <p class="text-stone-600">Total: {{ totalItems }}</p>
+      <div class="flex items-center gap-2">
+        <button class="app-button px-4 py-1.5 text-xs" (click)="prevPage()" [disabled]="page === 0">Prev</button>
+        <span>Page {{ page + 1 }} / {{ totalPages || 1 }}</span>
+        <button class="app-button px-4 py-1.5 text-xs" (click)="nextPage()" [disabled]="page + 1 >= totalPages">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-card mt-6 p-6" *ngIf="selected as booking">
+    <h2 class="text-xl font-semibold">Edit Reservation {{ booking.bookingId }}</h2>
+    <p class="mt-3 text-sm text-emerald-700" *ngIf="editSuccessMessage">{{ editSuccessMessage }}</p>
+    <p class="mt-3 text-sm text-rose-700" *ngIf="editErrorMessage">{{ editErrorMessage }}</p>
+    <div class="mt-4 grid gap-3 md:grid-cols-2">
+      <input [(ngModel)]="editForm.checkInDate" type="date" [min]="today" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" />
+      <input [(ngModel)]="editForm.checkOutDate" type="date" [min]="editForm.checkInDate || today" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" />
+      <p class="text-xs text-rose-700 md:col-span-2" *ngIf="editSubmitted && editDateInvalid">Check-in/check-out dates are invalid.</p>
+      <div>
+        <input
+          [(ngModel)]="editForm.adults"
+          type="number"
+          min="1"
+          max="10"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          placeholder="Adults (1-10)"
+          (keydown)="blockNegativeInput($event)"
+          (input)="sanitizeEditInt('adults')"
+        />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="editSubmitted && editAdultsInvalid">Adults must be 1 to 10.</p>
+      </div>
+      <div>
+        <input
+          [(ngModel)]="editForm.children"
+          type="number"
+          min="0"
+          max="5"
+          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+          placeholder="Children (0-5)"
+          (keydown)="blockNegativeInput($event)"
+          (input)="sanitizeEditInt('children')"
+        />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="editSubmitted && editChildrenInvalid">Children must be 0 to 5.</p>
+      </div>
+      <p class="text-xs text-rose-700 md:col-span-2" *ngIf="editSubmitted && editGuestTotalInvalid">Adults + children cannot exceed 10.</p>
+      <div>
+        <input [(ngModel)]="editForm.roomCode" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Assigned room number" />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="editSubmitted && !editForm.roomCode.trim()">Room number is required.</p>
+      </div>
+      <textarea [(ngModel)]="editForm.specialRequests" rows="3" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Special requests / notes"></textarea>
+    </div>
+
+    <div class="mt-4 flex gap-2">
+      <button class="app-button px-5" (click)="submitEdit()" [disabled]="!isEditFormValid || updating">
+        {{ updating ? 'Updating...' : 'Update Reservation' }}
+      </button>
+      <button class="app-button-outline px-5" (click)="closeEdit()">Close</button>
+    </div>
+  </div>
+
+  <div *ngIf="cancelTarget as booking" class="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+    <div class="w-full max-w-lg rounded-2xl border border-stone-200 bg-[#fffdfa] p-6 shadow-2xl">
+      <h3 class="text-xl font-semibold">Cancel Reservation</h3>
+      <p class="mt-2 text-sm text-stone-700">
+        Confirm cancellation for <span class="font-semibold">{{ booking.bookingId }}</span> ({{ booking.customerName }})?
+      </p>
+      <p class="mt-2 text-xs text-stone-600">Cancelled reservations are retained for reporting and cannot be restored from UI.</p>
+      <div class="mt-5 flex justify-end gap-2">
+        <button class="app-button-outline px-4 py-2" (click)="closeCancel()" [disabled]="cancelling">Back</button>
+        <button class="app-button px-4 py-2" (click)="confirmCancel()" [disabled]="cancelling">
+          {{ cancelling ? 'Cancelling...' : 'Confirm Cancel' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

@@ -18,6 +18,7 @@ public class RoomDataInitializer {
       roomRepository.save(createRoom(
           "STD-101",
           "Standard",
+          "Queen",
           6000,
           2,
           1,
@@ -28,6 +29,7 @@ public class RoomDataInitializer {
       roomRepository.save(createRoom(
           "DLX-210",
           "Deluxe",
+          "King",
           8000,
           3,
           2,
@@ -38,6 +40,7 @@ public class RoomDataInitializer {
       roomRepository.save(createRoom(
           "STE-501",
           "Suite",
+          "King",
           14000,
           4,
           2,
@@ -53,10 +56,22 @@ public class RoomDataInitializer {
       String roomType = room.getRoomType();
       if ("Standard".equalsIgnoreCase(roomType)) {
         room.setImageUrl("/assets/Standard.png");
+        if (room.getBedType() == null || room.getBedType().isBlank()) {
+          room.setBedType("Queen");
+        }
       } else if ("Deluxe".equalsIgnoreCase(roomType)) {
         room.setImageUrl("/assets/Deluxe.png");
+        if (room.getBedType() == null || room.getBedType().isBlank()) {
+          room.setBedType("King");
+        }
       } else if ("Suite".equalsIgnoreCase(roomType)) {
         room.setImageUrl("/assets/Suite.png");
+        if (room.getBedType() == null || room.getBedType().isBlank()) {
+          room.setBedType("King");
+        }
+      }
+      if (room.getRoomStatus() == null || room.getRoomStatus().isBlank()) {
+        room.setRoomStatus("AVAILABLE");
       }
       roomRepository.save(room);
     });
@@ -65,6 +80,7 @@ public class RoomDataInitializer {
   private Room createRoom(
       String roomCode,
       String roomType,
+      String bedType,
       int price,
       int occAdults,
       int occChildren,
@@ -75,6 +91,7 @@ public class RoomDataInitializer {
     Room room = new Room();
     room.setRoomCode(roomCode);
     room.setRoomType(roomType);
+    room.setBedType(bedType);
     room.setPricePerNight(price);
     room.setOccupancyAdults(occAdults);
     room.setOccupancyChildren(occChildren);
@@ -82,6 +99,7 @@ public class RoomDataInitializer {
     room.setRoomSizeSqFt(size);
     room.setImageUrl(imageUrl);
     room.setActive(true);
+    room.setRoomStatus("AVAILABLE");
     return room;
   }
 }

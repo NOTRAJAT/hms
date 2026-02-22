@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
@@ -65,8 +66,23 @@ public class Complaint {
   @Column(length = 1000)
   private String resolutionNotes;
 
+  @Column(nullable = true, length = 20)
+  private String priorityLevel;
+
+  @Column(nullable = false)
+  private boolean escalated;
+
+  @Column(nullable = true)
+  private String assignedStaffMember;
+
+  @Column(nullable = true)
+  private String assignedDepartment;
+
   @Column(nullable = false)
   private Instant createdAt;
+
+  @Column(nullable = true)
+  private Instant updatedAt;
 
   @PrePersist
   void onCreate() {
@@ -76,9 +92,20 @@ public class Complaint {
     if (createdAt == null) {
       createdAt = Instant.now();
     }
+    if (updatedAt == null) {
+      updatedAt = createdAt;
+    }
     if (expectedResolutionDate == null) {
       expectedResolutionDate = LocalDate.now().plusDays(2);
     }
+    if (priorityLevel == null || priorityLevel.isBlank()) {
+      priorityLevel = "Medium";
+    }
+  }
+
+  @PreUpdate
+  void onUpdate() {
+    updatedAt = Instant.now();
   }
 
   public Long getId() {
@@ -179,5 +206,45 @@ public class Complaint {
 
   public void setCreatedAt(Instant createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public Instant getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Instant updatedAt) {
+    this.updatedAt = updatedAt;
+  }
+
+  public String getAssignedStaffMember() {
+    return assignedStaffMember;
+  }
+
+  public void setAssignedStaffMember(String assignedStaffMember) {
+    this.assignedStaffMember = assignedStaffMember;
+  }
+
+  public String getAssignedDepartment() {
+    return assignedDepartment;
+  }
+
+  public void setAssignedDepartment(String assignedDepartment) {
+    this.assignedDepartment = assignedDepartment;
+  }
+
+  public String getPriorityLevel() {
+    return priorityLevel;
+  }
+
+  public void setPriorityLevel(String priorityLevel) {
+    this.priorityLevel = priorityLevel;
+  }
+
+  public boolean isEscalated() {
+    return escalated;
+  }
+
+  public void setEscalated(boolean escalated) {
+    this.escalated = escalated;
   }
 }

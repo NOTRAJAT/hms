@@ -27,6 +27,7 @@
     "@ngrx/store": "^17.2.0",
     "@ngrx/store-devtools": "^17.2.0",
     "bootstrap": "5.3",
+    "chart.js": "4.4.7",
     "express": "^4.22.1",
     "jspdf": "^2.5.1",
     "rxjs": "~7.8.0",

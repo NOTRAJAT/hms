@@ -33,4 +33,8 @@ export class RoomService {
 
     return this.http.get<RoomSearchResult[]>(`${this.baseUrl}/search`, { params: query });
   }
+
+  roomTypes(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/types`);
+  }
 }

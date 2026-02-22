@@ -1,0 +1,34 @@
+<section class="mx-auto max-w-6xl px-6 py-10" *ngIf="summary as s">
+  <div class="app-card p-8">
+    <h1 class="text-3xl font-semibold">Welcome, {{ session.value?.name }}!</h1>
+    <p class="mt-2 text-sm app-subtitle">Admin dashboard overview.</p>
+  </div>
+
+  <div class="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div class="app-card p-5">
+      <p class="text-xs font-semibold uppercase tracking-wider text-amber-800/60">Daily Bookings</p>
+      <p class="mt-2 text-2xl font-semibold">{{ s.dailyBookings }}</p>
+    </div>
+    <div class="app-card p-5">
+      <p class="text-xs font-semibold uppercase tracking-wider text-amber-800/60">Weekly Bookings</p>
+      <p class="mt-2 text-2xl font-semibold">{{ s.weeklyBookings }}</p>
+    </div>
+    <div class="app-card p-5">
+      <p class="text-xs font-semibold uppercase tracking-wider text-amber-800/60">Monthly Bookings</p>
+      <p class="mt-2 text-2xl font-semibold">{{ s.monthlyBookings }}</p>
+    </div>
+    <div class="app-card p-5">
+      <p class="text-xs font-semibold uppercase tracking-wider text-amber-800/60">Available Rooms</p>
+      <p class="mt-2 text-2xl font-semibold">{{ s.availableRooms }}</p>
+    </div>
+  </div>
+
+  <div class="mt-6">
+    <div class="app-card p-6">
+      <h2 class="text-lg font-semibold">Bookings Trend</h2>
+      <div class="mt-4 h-80">
+        <canvas #bookingsCanvas></canvas>
+      </div>
+    </div>
+  </div>
+</section>

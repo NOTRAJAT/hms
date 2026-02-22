@@ -1,0 +1,10 @@
+# Constraints:
+# roomType: Mandatory. Allowed values = Standard | Deluxe | Suite | Supreme
+# price: Mandatory. Integer >= 1000 (INR)
+# amenities: Optional. Comma-separated from allowed list = WiFi | TV | Mini-bar | AC | Air Conditioning | Balcony | Breakfast
+# availability: Mandatory. Allowed values = Available | Not Available
+# maxOccupancy: Mandatory. Integer between 1 and 10
+# description: Optional. Max length 500 characters
+# bedType: Optional. Allowed values = King | Queen
+roomType,price,amenities,availability,maxOccupancy,description,bedType
+Deluxe,8000,"WiFi, TV, AC",Available,3,"City facing room",King

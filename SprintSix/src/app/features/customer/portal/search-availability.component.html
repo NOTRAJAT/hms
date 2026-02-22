@@ -81,7 +81,7 @@
           <div>
             <label class="app-label" for="roomType">Room Type</label>
             <select id="roomType" formControlName="roomType" class="mt-1 app-select">
-              <option value="" disabled>Select</option>
+              <option value="ALL">All Types</option>
               <option *ngFor="let type of roomTypes" [value]="type">{{ type }}</option>
             </select>
             <p *ngIf="form.get('roomType')?.touched && form.get('roomType')?.invalid" class="mt-1 text-xs text-rose-600">
@@ -146,7 +146,8 @@
               </div>
             </div>
             <div class="text-right">
-              <p class="text-2xl font-semibold">₹{{ room.price }}</p>
+              <p class="text-2xl font-semibold" *ngIf="room.minPrice !== room.maxPrice">₹{{ room.minPrice }} - ₹{{ room.maxPrice }}</p>
+              <p class="text-2xl font-semibold" *ngIf="room.minPrice === room.maxPrice">₹{{ room.price }}</p>
               <p class="text-xs app-subtitle">per night</p>
               <p class="mt-2 text-sm">
                 Status:

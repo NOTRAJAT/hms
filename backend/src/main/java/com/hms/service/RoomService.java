@@ -9,6 +9,7 @@ import com.hms.repo.RoomRepository;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +34,9 @@ public class RoomService {
   ) {
     validate(checkInDate, checkOutDate, adults, children, roomType);
 
-    List<Room> rooms = roomRepository.findByActiveTrueAndRoomType(roomType.trim());
+    List<Room> rooms = isAllRoomTypes(roomType)
+        ? roomRepository.findByActiveTrue()
+        : roomRepository.findByActiveTrueAndRoomType(roomType.trim());
     return rooms.stream()
         .filter(room -> adults <= room.getOccupancyAdults() && children <= room.getOccupancyChildren())
         .map(room -> new RoomSearchResponse(
@@ -50,6 +53,15 @@ public class RoomService {
             room.getImageUrl(),
             isAvailable(room.getRoomCode(), checkInDate, checkOutDate)
         ))
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<String> activeRoomTypes() {
+    return roomRepository.findDistinctActiveRoomTypes().stream()
+        .map(value -> value == null ? "" : value.trim())
+        .filter(value -> !value.isBlank())
+        .map(value -> value.substring(0, 1).toUpperCase(Locale.ROOT) + value.substring(1))
         .toList();
   }
 
@@ -82,5 +94,13 @@ public class RoomService {
     if (roomType == null || roomType.isBlank()) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "roomType", "Please select a room type.");
     }
+  }
+
+  private boolean isAllRoomTypes(String roomType) {
+    if (roomType == null) {
+      return false;
+    }
+    String normalized = roomType.trim().toUpperCase(Locale.ROOT);
+    return "ALL".equals(normalized) || "ALL_TYPES".equals(normalized);
   }
 }

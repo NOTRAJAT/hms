@@ -1,7 +1,8 @@
-import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { LoginResult } from '../models/auth.model';
+import { CustomerService } from './customer.service';
 
 export interface SessionUser extends LoginResult {
   email: string;
@@ -9,50 +10,60 @@ export interface SessionUser extends LoginResult {
   address: string;
 }
 
-const STORAGE_KEY = 'hms_session';
-
 @Injectable({ providedIn: 'root' })
 export class AuthSessionService {
-  private subject: BehaviorSubject<SessionUser | null>;
-  session$!: Observable<SessionUser | null>;
-  private readonly isBrowser: boolean;
+  private subject = new BehaviorSubject<SessionUser | null>(null);
+  session$ = this.subject.asObservable();
 
   get value(): SessionUser | null {
     return this.subject.value;
   }
 
+  constructor(private customerService: CustomerService) {}
+
   set(session: SessionUser): void {
     this.subject.next(session);
-    if (this.isBrowser) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    }
   }
 
   clear(): void {
     this.subject.next(null);
-    if (this.isBrowser) {
-      localStorage.removeItem(STORAGE_KEY);
-    }
   }
 
-  constructor(@Inject(PLATFORM_ID) platformId: object) {
-    this.isBrowser = isPlatformBrowser(platformId);
-    this.subject = new BehaviorSubject<SessionUser | null>(this.load());
-    this.session$ = this.subject.asObservable();
+  invalidateServerSession(): Observable<void> {
+    this.clear();
+    return this.customerService.logout().pipe(
+      map(() => void 0),
+      catchError(() => of(void 0))
+    );
   }
 
-  private load(): SessionUser | null {
-    if (!this.isBrowser) {
-      return null;
-    }
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
-    try {
-      return JSON.parse(raw) as SessionUser;
-    } catch {
-      return null;
-    }
+  initialize(): Promise<void> {
+    return new Promise((resolve) => {
+      this.customerService.csrf().subscribe({
+        next: () => {
+          this.hydrateFromServer().subscribe({
+            next: () => resolve(),
+            error: () => resolve()
+          });
+        },
+        error: () => {
+          this.hydrateFromServer().subscribe({
+            next: () => resolve(),
+            error: () => resolve()
+          });
+        }
+      });
+    });
+  }
+
+  hydrateFromServer(): Observable<SessionUser | null> {
+    return this.customerService.me().pipe(
+      tap((user) => this.subject.next(user)),
+      map((user) => user as SessionUser),
+      catchError(() => {
+        this.subject.next(null);
+        return of(null);
+      })
+    );
   }
 }

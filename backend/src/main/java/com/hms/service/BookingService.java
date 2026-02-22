@@ -99,6 +99,7 @@ public class BookingService {
     booking.setOccupancyChildren(room.getOccupancyChildren());
     booking.setPricePerNight(room.getPricePerNight());
     booking.setCheckInDate(request.getCheckInDate());
+    booking.setOriginalCheckInDate(request.getCheckInDate());
     booking.setCheckOutDate(request.getCheckOutDate());
     booking.setNights(nights);
     booking.setAdults(request.getAdults());
@@ -108,6 +109,7 @@ public class BookingService {
     booking.setServiceChargeAmount(service);
     booking.setTotalAmount(total);
     booking.setPaymentMethod(request.getPaymentMethod().trim());
+    booking.setPaymentStatus("PAID");
     booking.setSpecialRequests(request.getSpecialRequests() == null ? "" : request.getSpecialRequests().trim());
     booking.setStatus(Booking.Status.Confirmed);
 
@@ -150,7 +152,7 @@ public class BookingService {
     }
     Booking booking = bookingRepository.findByBookingIdAndCustomerUserId(bookingId, userId)
         .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Booking not found for this user."));
-    if (booking.getStatus() != Booking.Status.Confirmed) {
+    if (booking.getStatus() != Booking.Status.Confirmed || !"PAID".equalsIgnoreCase(booking.getPaymentStatus())) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Invoice can only be generated for paid bookings.");
     }
     return new InvoiceResponse(
@@ -188,8 +190,15 @@ public class BookingService {
     String message;
     if (data.additional > 0) {
       message = "Additional payment is required to confirm this modification.";
+    } else if (data.refund > 0 && data.refundCappedByPolicy) {
+      message = String.format(
+          "Your updated booking costs less. Refund is capped to %d%% as per the cancellation policy.",
+          data.policyRefundPercent
+      );
     } else if (data.refund > 0) {
-      message = "Your updated booking costs less. Refund (if applicable) will be processed as per the cancellation policy.";
+      message = "Your updated booking costs less. Refund will be processed as per the cancellation policy.";
+    } else if (data.rawRefund > 0) {
+      message = "Your updated booking costs less, but no refund is applicable as per the cancellation policy.";
     } else {
       message = "No price change for this modification.";
     }
@@ -286,11 +295,12 @@ public class BookingService {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Booking is already canceled.");
     }
     LocalDate today = LocalDate.now();
-    if (!booking.getCheckInDate().isAfter(today)) {
+    LocalDate policyCheckInDate = policyReferenceCheckInDate(booking);
+    if (!policyCheckInDate.isAfter(today)) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "This booking cannot be canceled as it is past the allowed cancellation window.");
     }
 
-    long hoursUntilCheckIn = ChronoUnit.HOURS.between(LocalDateTime.now(), booking.getCheckInDate().atStartOfDay());
+    long hoursUntilCheckIn = ChronoUnit.HOURS.between(LocalDateTime.now(), policyCheckInDate.atStartOfDay());
     int refundAmount;
     String previewMessage;
     if (hoursUntilCheckIn >= 48) {
@@ -347,9 +357,14 @@ public class BookingService {
     int base = selectedRoom.getPricePerNight() * nights;
     int gst = Math.round(base * 0.10f);
     int service = Math.round(base * 0.02f);
-    int total = base + gst + service;
-    int additional = Math.max(0, total - booking.getTotalAmount());
-    int refund = Math.max(0, booking.getTotalAmount() - total);
+    int stayTotal = base + gst + service;
+    int additional = Math.max(0, stayTotal - booking.getTotalAmount());
+    int rawRefund = Math.max(0, booking.getTotalAmount() - stayTotal);
+    int policyRefundPercent = cancellationRefundPercent(booking);
+    int maxRefundByPolicy = Math.round(booking.getTotalAmount() * (policyRefundPercent / 100f));
+    int refund = Math.min(rawRefund, maxRefundByPolicy);
+    int effectiveTotal = booking.getTotalAmount() + additional - refund;
+    boolean refundCappedByPolicy = rawRefund > refund;
 
     return new ModificationData(
         booking,
@@ -362,9 +377,12 @@ public class BookingService {
         base,
         gst,
         service,
-        total,
+        effectiveTotal,
         additional,
-        refund
+        refund,
+        rawRefund,
+        policyRefundPercent,
+        refundCappedByPolicy
     );
   }
 
@@ -452,6 +470,25 @@ public class BookingService {
     return String.format("%s-%06d", prefix, RANDOM.nextInt(1_000_000));
   }
 
+  private int cancellationRefundPercent(Booking booking) {
+    LocalDate policyCheckInDate = policyReferenceCheckInDate(booking);
+    long hoursUntilCheckIn = ChronoUnit.HOURS.between(LocalDateTime.now(), policyCheckInDate.atStartOfDay());
+    if (hoursUntilCheckIn >= 48) {
+      return 100;
+    }
+    if (hoursUntilCheckIn >= 24) {
+      return 50;
+    }
+    return 0;
+  }
+
+  private LocalDate policyReferenceCheckInDate(Booking booking) {
+    if (booking.getOriginalCheckInDate() != null) {
+      return booking.getOriginalCheckInDate();
+    }
+    return booking.getCheckInDate();
+  }
+
   private static class CancellationPolicyResult {
     private final Booking booking;
     private final int refundAmount;
@@ -480,6 +517,9 @@ public class BookingService {
     private final int newTotal;
     private final int additional;
     private final int refund;
+    private final int rawRefund;
+    private final int policyRefundPercent;
+    private final boolean refundCappedByPolicy;
 
     ModificationData(
         Booking booking,
@@ -494,7 +534,10 @@ public class BookingService {
         int newService,
         int newTotal,
         int additional,
-        int refund
+        int refund,
+        int rawRefund,
+        int policyRefundPercent,
+        boolean refundCappedByPolicy
     ) {
       this.booking = booking;
       this.room = room;
@@ -509,6 +552,9 @@ public class BookingService {
       this.newTotal = newTotal;
       this.additional = additional;
       this.refund = refund;
+      this.rawRefund = rawRefund;
+      this.policyRefundPercent = policyRefundPercent;
+      this.refundCappedByPolicy = refundCappedByPolicy;
     }
   }
 }

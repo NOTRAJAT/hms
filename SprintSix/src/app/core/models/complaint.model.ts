@@ -15,11 +15,19 @@ export interface ComplaintRecord {
   title: string;
   description: string;
   contactPreference: string;
-  status: 'Open' | 'In Progress' | 'Resolved' | 'Closed' | string;
+  status: 'Open' | 'In Progress' | 'Escalated' | 'Resolved' | 'Closed' | string;
   createdAt: string;
   expectedResolutionDate: string;
   editable: boolean;
   acknowledgementMessage: string;
   supportResponse: string;
   resolutionNotes: string;
+  checkpointUpdates: ComplaintCheckpointUpdate[];
+}
+
+export interface ComplaintCheckpointUpdate {
+  updatedAt: string;
+  status: string;
+  message: string;
+  actorName: string;
 }

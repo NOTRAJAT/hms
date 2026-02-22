@@ -16,11 +16,11 @@ export class ComplaintService {
   }
 
   list(userId: string): Observable<ComplaintRecord[]> {
-    return this.http.get<ComplaintRecord[]>(`${this.baseUrl}?userId=${encodeURIComponent(userId)}`);
+    return this.http.get<ComplaintRecord[]>(this.baseUrl);
   }
 
   detail(complaintId: string, userId: string): Observable<ComplaintRecord> {
-    return this.http.get<ComplaintRecord>(`${this.baseUrl}/${encodeURIComponent(complaintId)}?userId=${encodeURIComponent(userId)}`);
+    return this.http.get<ComplaintRecord>(`${this.baseUrl}/${encodeURIComponent(complaintId)}`);
   }
 
   create(payload: ComplaintPayload): Observable<ComplaintRecord> {
@@ -33,14 +33,14 @@ export class ComplaintService {
 
   confirmResolution(complaintId: string, userId: string): Observable<ComplaintRecord> {
     return this.http.patch<ComplaintRecord>(
-      `${this.baseUrl}/${encodeURIComponent(complaintId)}/confirm?userId=${encodeURIComponent(userId)}`,
+      `${this.baseUrl}/${encodeURIComponent(complaintId)}/confirm`,
       {}
     );
   }
 
   reopen(complaintId: string, userId: string): Observable<ComplaintRecord> {
     return this.http.patch<ComplaintRecord>(
-      `${this.baseUrl}/${encodeURIComponent(complaintId)}/reopen?userId=${encodeURIComponent(userId)}`,
+      `${this.baseUrl}/${encodeURIComponent(complaintId)}/reopen`,
       {}
     );
   }

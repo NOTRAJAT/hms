@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -18,7 +18,7 @@ import { RoomService } from '../../../core/services/room.service';
   imports: [NgFor, NgIf, ReactiveFormsModule],
   templateUrl: './my-bookings.component.html'
 })
-export class MyBookingsComponent {
+export class MyBookingsComponent implements OnInit {
   bookings: BookingResponse[] = [];
   errorMessage = '';
   selectedBookingId = '';
@@ -31,7 +31,7 @@ export class MyBookingsComponent {
   modificationError = '';
   availabilityMessage = '';
 
-  readonly roomTypes = ['Standard', 'Deluxe', 'Suite'];
+  roomTypes: string[] = ['Standard', 'Deluxe', 'Suite', 'Supreme'];
 
   private readonly hotelName = 'Hotel Management System';
   private readonly hotelLocation = '12 Garden Lane, City Center';
@@ -59,6 +59,14 @@ export class MyBookingsComponent {
       }
     });
 
+    this.modifyForm.get('checkInDate')?.valueChanges.subscribe((value) => {
+      const nextCheckIn = this.toDate(String(value ?? ''));
+      const currentCheckOut = this.toDate(String(this.modifyForm.get('checkOutDate')?.value ?? ''));
+      if (nextCheckIn && currentCheckOut && currentCheckOut <= nextCheckIn) {
+        this.modifyForm.get('checkOutDate')?.setValue('', { emitEvent: false });
+      }
+    });
+
     this.modifyForm.valueChanges.subscribe(() => {
       this.modificationPreview = null;
       this.modificationError = '';
@@ -66,6 +74,22 @@ export class MyBookingsComponent {
     });
 
     this.loadBookings();
+  }
+
+  ngOnInit(): void {
+    this.roomService.roomTypes().subscribe({
+      next: (types) => {
+        const normalized = (types || [])
+          .map((type) => String(type ?? '').trim())
+          .filter((type) => !!type);
+        if (normalized.length > 0) {
+          this.roomTypes = Array.from(new Set([...this.roomTypes, ...normalized]));
+        }
+      },
+      error: () => {
+        // Keep fallback types if API fails.
+      }
+    });
   }
 
   cancel(bookingId: string): void {
@@ -132,6 +156,9 @@ export class MyBookingsComponent {
       children: booking.children,
       roomType: booking.roomType
     }, { emitEvent: false });
+    if (booking.roomType && !this.roomTypes.includes(booking.roomType)) {
+      this.roomTypes = [...this.roomTypes, booking.roomType];
+    }
     this.checkRealtimeAvailability();
   }
 
@@ -210,6 +237,13 @@ export class MyBookingsComponent {
         this.modificationError = error?.error?.error || 'Modification failed due to payment error. Please try again.';
       }
     });
+  }
+
+  modificationRefundPercent(preview: ModifyBookingPreviewResponse | null): number {
+    if (!preview || preview.refundAmount <= 0 || preview.oldTotalAmount <= 0) {
+      return 0;
+    }
+    return Math.round((preview.refundAmount / preview.oldTotalAmount) * 100);
   }
 
   viewDetails(bookingId: string): void {
@@ -426,5 +460,33 @@ export class MyBookingsComponent {
 
   get hotelDisplayLocation(): string {
     return this.hotelLocation;
+  }
+
+  get modifyMinCheckInDate(): string {
+    const today = this.startOfDay(new Date());
+    if (!this.modifyingBooking) {
+      return this.toInputDate(today);
+    }
+    const bookingCheckIn = this.toDate(this.modifyingBooking.checkInDate);
+    if (!bookingCheckIn) {
+      return this.toInputDate(today);
+    }
+    const min = bookingCheckIn > today ? bookingCheckIn : today;
+    return this.toInputDate(min);
+  }
+
+  get modifyMinCheckOutDate(): string {
+    const checkIn = this.toDate(String(this.modifyForm.value.checkInDate ?? ''));
+    const base = checkIn ?? this.toDate(this.modifyMinCheckInDate) ?? this.startOfDay(new Date());
+    const next = new Date(base);
+    next.setDate(next.getDate() + 1);
+    return this.toInputDate(next);
+  }
+
+  private toInputDate(value: Date): string {
+    const yyyy = value.getFullYear();
+    const mm = String(value.getMonth() + 1).padStart(2, '0');
+    const dd = String(value.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 }

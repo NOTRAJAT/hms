@@ -9,4 +9,6 @@ export interface LoginResult {
   email: string;
   mobile: string;
   address: string;
+  role: 'ADMIN' | 'CUSTOMER' | 'STAFF';
+  passwordChangeRequired: boolean;
 }

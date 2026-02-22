@@ -89,7 +89,9 @@ export class ProfileComponent {
           name: result.name,
           email: result.email,
           mobile: result.mobile,
-          address: result.address
+          address: result.address,
+          role: result.role,
+          passwordChangeRequired: result.passwordChangeRequired
         });
         this.isSaving = false;
         this.isEditing = false;
@@ -120,7 +122,15 @@ export class ProfileComponent {
   }
 
   logout(): void {
-    this.session.clear();
-    this.router.navigateByUrl('/login');
+    this.customerService.logout().subscribe({
+      next: () => {
+        this.session.clear();
+        this.router.navigateByUrl('/login');
+      },
+      error: () => {
+        this.session.clear();
+        this.router.navigateByUrl('/login');
+      }
+    });
   }
 }

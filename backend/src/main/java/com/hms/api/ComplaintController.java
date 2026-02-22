@@ -7,14 +7,14 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -27,35 +27,38 @@ public class ComplaintController {
   }
 
   @GetMapping
-  public ResponseEntity<List<ComplaintResponse>> list(@RequestParam String userId) {
-    return ResponseEntity.ok(service.listByUser(userId));
+  public ResponseEntity<List<ComplaintResponse>> list(Authentication authentication) {
+    return ResponseEntity.ok(service.listByUser(authentication.getName()));
   }
 
   @GetMapping("/{complaintId}")
-  public ResponseEntity<ComplaintResponse> detail(@PathVariable String complaintId, @RequestParam String userId) {
-    return ResponseEntity.ok(service.detail(complaintId, userId));
+  public ResponseEntity<ComplaintResponse> detail(@PathVariable String complaintId, Authentication authentication) {
+    return ResponseEntity.ok(service.detail(complaintId, authentication.getName()));
   }
 
   @PostMapping
-  public ResponseEntity<ComplaintResponse> create(@Valid @RequestBody ComplaintRequest request) {
+  public ResponseEntity<ComplaintResponse> create(@Valid @RequestBody ComplaintRequest request, Authentication authentication) {
+    request.setUserId(authentication.getName());
     return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
   }
 
   @PutMapping("/{complaintId}")
   public ResponseEntity<ComplaintResponse> update(
       @PathVariable String complaintId,
-      @Valid @RequestBody ComplaintRequest request
+      @Valid @RequestBody ComplaintRequest request,
+      Authentication authentication
   ) {
+    request.setUserId(authentication.getName());
     return ResponseEntity.ok(service.update(complaintId, request));
   }
 
   @PatchMapping("/{complaintId}/confirm")
-  public ResponseEntity<ComplaintResponse> confirm(@PathVariable String complaintId, @RequestParam String userId) {
-    return ResponseEntity.ok(service.confirmResolution(complaintId, userId));
+  public ResponseEntity<ComplaintResponse> confirm(@PathVariable String complaintId, Authentication authentication) {
+    return ResponseEntity.ok(service.confirmResolution(complaintId, authentication.getName()));
   }
 
   @PatchMapping("/{complaintId}/reopen")
-  public ResponseEntity<ComplaintResponse> reopen(@PathVariable String complaintId, @RequestParam String userId) {
-    return ResponseEntity.ok(service.reopen(complaintId, userId));
+  public ResponseEntity<ComplaintResponse> reopen(@PathVariable String complaintId, Authentication authentication) {
+    return ResponseEntity.ok(service.reopen(complaintId, authentication.getName()));
   }
 }

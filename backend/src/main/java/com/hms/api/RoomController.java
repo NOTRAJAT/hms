@@ -29,4 +29,9 @@ public class RoomController {
   ) {
     return ResponseEntity.ok(service.search(checkInDate, checkOutDate, adults, children, roomType));
   }
+
+  @GetMapping("/types")
+  public ResponseEntity<List<String>> types() {
+    return ResponseEntity.ok(service.activeRoomTypes());
+  }
 }

@@ -5,9 +5,12 @@ import com.hms.api.dto.LoginRequest;
 import com.hms.api.dto.LoginResponse;
 import com.hms.api.dto.RegisterRequest;
 import com.hms.api.dto.RegisterResponse;
+import com.hms.api.dto.ChangePasswordRequest;
 import com.hms.api.dto.UpdateProfileRequest;
 import com.hms.domain.Customer;
+import com.hms.domain.Staff;
 import com.hms.repo.CustomerRepository;
+import com.hms.repo.StaffRepository;
 import java.security.SecureRandom;
 import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
@@ -24,10 +27,12 @@ public class CustomerService {
   private static final Pattern MOBILE_WITH_COUNTRY_CODE_PATTERN = Pattern.compile("^\\+[0-9]{1,3}[0-9]{10}$");
 
   private final CustomerRepository repository;
+  private final StaffRepository staffRepository;
   private final PasswordEncoder encoder;
 
-  public CustomerService(CustomerRepository repository, PasswordEncoder encoder) {
+  public CustomerService(CustomerRepository repository, StaffRepository staffRepository, PasswordEncoder encoder) {
     this.repository = repository;
+    this.staffRepository = staffRepository;
     this.encoder = encoder;
   }
 
@@ -46,13 +51,13 @@ public class CustomerService {
           "Password must be at least 8 characters and include a mix of uppercase, lowercase, number, and special character.");
     }
 
-    if (repository.existsByEmail(email)) {
+    if (repository.existsByEmail(email) || staffRepository.existsByEmail(email)) {
       throw new ApiException(HttpStatus.CONFLICT, "email", "Email already registered");
     }
-    if (repository.existsByMobile(mobile)) {
+    if (repository.existsByMobile(mobile) || staffRepository.existsByMobile(mobile)) {
       throw new ApiException(HttpStatus.CONFLICT, "mobileNumber", "Mobile number already registered.");
     }
-    if (repository.existsByUsername(username)) {
+    if (repository.existsByUsername(username) || staffRepository.existsByUsername(username)) {
       throw new ApiException(HttpStatus.CONFLICT, "username", "Username must be at least 5 characters and unique.");
     }
 
@@ -66,6 +71,8 @@ public class CustomerService {
     customer.setPasswordHash(encoder.encode(request.getPassword()));
     customer.setFailedAttempts(0);
     customer.setLocked(false);
+    customer.setAdmin(false);
+    customer.setPasswordChangeRequired(false);
 
     repository.save(customer);
     return new RegisterResponse(customer.getUserId(), customer.getName(), customer.getEmail());
@@ -75,46 +82,18 @@ public class CustomerService {
   public LoginResponse login(LoginRequest request) {
     String username = request.getUsername().trim().toLowerCase();
     Customer customer = repository.findByUsername(username).orElse(null);
-
-    if (customer == null) {
-      throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid username or password.");
+    if (customer != null) {
+      return loginCustomer(request, customer);
     }
-
-    if (customer.isLocked()) {
-      throw new ApiException(HttpStatus.LOCKED, "Your account is locked. Please contact support.");
+    Staff staff = staffRepository.findByUsername(username).orElse(null);
+    if (staff != null) {
+      return loginStaff(request, staff);
     }
-
-    if (!encoder.matches(request.getPassword(), customer.getPasswordHash())) {
-      int attempts = customer.getFailedAttempts() + 1;
-      customer.setFailedAttempts(attempts);
-      if (attempts >= MAX_FAILED_ATTEMPTS) {
-        customer.setLocked(true);
-      }
-      repository.save(customer);
-      if (customer.isLocked()) {
-        throw new ApiException(HttpStatus.LOCKED, "Your account is locked. Please contact support.");
-      }
-      throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid username or password.");
-    }
-
-    customer.setFailedAttempts(0);
-    customer.setLocked(false);
-    repository.save(customer);
-
-    return new LoginResponse(
-        customer.getUserId(),
-        customer.getName(),
-        customer.getEmail(),
-        customer.getMobile(),
-        customer.getAddress()
-    );
+    throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid username or password.");
   }
 
   @Transactional
   public LoginResponse updateProfile(String userId, UpdateProfileRequest request) {
-    Customer customer = repository.findByUserId(userId)
-        .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Customer not found."));
-
     String name = sanitize(request.getName());
     String email = sanitize(request.getEmail()).toLowerCase();
     String mobile = sanitize(request.getMobile());
@@ -140,26 +119,73 @@ public class CustomerService {
           "Address must be 100 characters or fewer.");
     }
 
-    if (repository.existsByEmailAndUserIdNot(email, userId)) {
+    Customer customer = repository.findByUserId(userId).orElse(null);
+    if (customer != null) {
+      if (repository.existsByEmailAndUserIdNot(email, userId) || staffRepository.existsByEmail(email)) {
+        throw new ApiException(HttpStatus.CONFLICT, "email", "Email already registered");
+      }
+      if (repository.existsByMobileAndUserIdNot(mobile, userId) || staffRepository.existsByMobile(mobile)) {
+        throw new ApiException(HttpStatus.CONFLICT, "mobile", "Mobile number already registered.");
+      }
+      customer.setName(name);
+      customer.setEmail(email);
+      customer.setMobile(mobile);
+      customer.setAddress(address);
+      repository.save(customer);
+      return toLoginResponse(customer);
+    }
+
+    Staff staff = staffRepository.findByUserId(userId)
+        .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found."));
+    if (staffRepository.existsByEmailAndUserIdNot(email, userId) || repository.existsByEmail(email)) {
       throw new ApiException(HttpStatus.CONFLICT, "email", "Email already registered");
     }
-    if (repository.existsByMobileAndUserIdNot(mobile, userId)) {
+    if (staffRepository.existsByMobileAndUserIdNot(mobile, userId) || repository.existsByMobile(mobile)) {
       throw new ApiException(HttpStatus.CONFLICT, "mobile", "Mobile number already registered.");
     }
+    staff.setName(name);
+    staff.setEmail(email);
+    staff.setMobile(mobile);
+    staff.setAddress(address);
+    staffRepository.save(staff);
+    return toLoginResponse(staff);
+  }
 
-    customer.setName(name);
-    customer.setEmail(email);
-    customer.setMobile(mobile);
-    customer.setAddress(address);
-    repository.save(customer);
+  @Transactional(readOnly = true)
+  public LoginResponse getByUserId(String userId) {
+    Customer customer = repository.findByUserId(userId).orElse(null);
+    if (customer != null) {
+      return toLoginResponse(customer);
+    }
+    Staff staff = staffRepository.findByUserId(userId)
+        .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found."));
+    return toLoginResponse(staff);
+  }
 
-    return new LoginResponse(
-        customer.getUserId(),
-        customer.getName(),
-        customer.getEmail(),
-        customer.getMobile(),
-        customer.getAddress()
-    );
+  @Transactional
+  public void changePassword(String userId, ChangePasswordRequest request) {
+    if (!isStrongPassword(request.getNewPassword())) {
+      throw new ApiException(HttpStatus.BAD_REQUEST,
+          "Password must be at least 8 characters and include a mix of uppercase, lowercase, number, and special character.");
+    }
+    Customer customer = repository.findByUserId(userId).orElse(null);
+    if (customer != null) {
+      if (!encoder.matches(request.getCurrentPassword(), customer.getPasswordHash())) {
+        throw new ApiException(HttpStatus.BAD_REQUEST, "Current password is incorrect.");
+      }
+      customer.setPasswordHash(encoder.encode(request.getNewPassword()));
+      customer.setPasswordChangeRequired(false);
+      repository.save(customer);
+      return;
+    }
+    Staff staff = staffRepository.findByUserId(userId)
+        .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found."));
+    if (!encoder.matches(request.getCurrentPassword(), staff.getPasswordHash())) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Current password is incorrect.");
+    }
+    staff.setPasswordHash(encoder.encode(request.getNewPassword()));
+    staff.setPasswordChangeRequired(false);
+    staffRepository.save(staff);
   }
 
   private String generateUserId() {
@@ -183,5 +209,73 @@ public class CustomerService {
 
   private String sanitize(String value) {
     return value == null ? "" : value.trim();
+  }
+
+  private LoginResponse loginCustomer(LoginRequest request, Customer customer) {
+    if (customer.isLocked()) {
+      throw new ApiException(HttpStatus.LOCKED, "Your account is locked. Please contact support.");
+    }
+    if (!encoder.matches(request.getPassword(), customer.getPasswordHash())) {
+      int attempts = customer.getFailedAttempts() + 1;
+      customer.setFailedAttempts(attempts);
+      if (attempts >= MAX_FAILED_ATTEMPTS) {
+        customer.setLocked(true);
+      }
+      repository.save(customer);
+      if (customer.isLocked()) {
+        throw new ApiException(HttpStatus.LOCKED, "Your account is locked. Please contact support.");
+      }
+      throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid username or password.");
+    }
+    customer.setFailedAttempts(0);
+    customer.setLocked(false);
+    repository.save(customer);
+    return toLoginResponse(customer);
+  }
+
+  private LoginResponse loginStaff(LoginRequest request, Staff staff) {
+    if (staff.isLocked()) {
+      throw new ApiException(HttpStatus.LOCKED, "Your account is locked. Please contact support.");
+    }
+    if (!encoder.matches(request.getPassword(), staff.getPasswordHash())) {
+      int attempts = staff.getFailedAttempts() + 1;
+      staff.setFailedAttempts(attempts);
+      if (attempts >= MAX_FAILED_ATTEMPTS) {
+        staff.setLocked(true);
+      }
+      staffRepository.save(staff);
+      if (staff.isLocked()) {
+        throw new ApiException(HttpStatus.LOCKED, "Your account is locked. Please contact support.");
+      }
+      throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid username or password.");
+    }
+    staff.setFailedAttempts(0);
+    staff.setLocked(false);
+    staffRepository.save(staff);
+    return toLoginResponse(staff);
+  }
+
+  private LoginResponse toLoginResponse(Customer customer) {
+    return new LoginResponse(
+        customer.getUserId(),
+        customer.getName(),
+        customer.getEmail(),
+        customer.getMobile(),
+        customer.getAddress(),
+        customer.isAdmin() ? "ADMIN" : "CUSTOMER",
+        customer.isPasswordChangeRequired()
+    );
+  }
+
+  private LoginResponse toLoginResponse(Staff staff) {
+    return new LoginResponse(
+        staff.getUserId(),
+        staff.getName(),
+        staff.getEmail(),
+        staff.getMobile(),
+        staff.getAddress(),
+        "STAFF",
+        staff.isPasswordChangeRequired()
+    );
   }
 }

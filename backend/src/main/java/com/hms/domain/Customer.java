@@ -50,6 +50,12 @@ public class Customer {
   @Column(nullable = false)
   private boolean locked;
 
+  @Column(nullable = false)
+  private boolean admin;
+
+  @Column(nullable = false)
+  private boolean passwordChangeRequired;
+
   public Long getId() {
     return id;
   }
@@ -124,5 +130,21 @@ public class Customer {
 
   public void setLocked(boolean locked) {
     this.locked = locked;
+  }
+
+  public boolean isAdmin() {
+    return admin;
+  }
+
+  public void setAdmin(boolean admin) {
+    this.admin = admin;
+  }
+
+  public boolean isPasswordChangeRequired() {
+    return passwordChangeRequired;
+  }
+
+  public void setPasswordChangeRequired(boolean passwordChangeRequired) {
+    this.passwordChangeRequired = passwordChangeRequired;
   }
 }

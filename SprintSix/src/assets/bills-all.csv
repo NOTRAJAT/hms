@@ -1,0 +1,7 @@
+billType,billId,bookingId,customerUserId,customerName,issueDate,paymentStatus,roomCharges,serviceCharges,additionalRaw,additionalMode,additionalAmount,taxRaw,taxMode,taxAmount,discountRaw,discountMode,discountAmount,totalAmount,serviceItemCount,serviceItems
+"MANUAL_BILL","BILL-205887","","CUST-189723","Ajith","2026-02-22","PAID",7000,432,500,"AMOUNT",500,5,"PERCENT",397,0,"PERCENT",0,8329,1,"Dining @ 2026-02-26T13:34 (qty=1, unit=432, tax%=0, discount%=0, desc=)"
+"INVOICE","INV-717186","BK-431650","CUS-513135","mw","2026-02-21","PAID",90000,1800,0,"AMOUNT",0,9000,"AMOUNT",9000,0,"AMOUNT",0,100800,0,""
+"INVOICE","INV-330580","BK-326757","CUS-950239","Rajat","2026-02-21","PAID",12000,240,0,"AMOUNT",0,1200,"AMOUNT",1200,0,"AMOUNT",0,13440,0,""
+"INVOICE","INV-625352","BK-516369","CUS-605677","test","2026-02-21","PAID",32000,640,0,"AMOUNT",0,3200,"AMOUNT",3200,0,"AMOUNT",0,35840,0,""
+"INVOICE","INV-216861","BK-335022","CUS-483285","Rajat","2026-02-21","PAID",15000,300,0,"AMOUNT",0,1500,"AMOUNT",1500,0,"AMOUNT",0,16800,0,""
+"INVOICE","INV-883230","BK-872869","CUST-296925","Rajat Achalkar","2026-02-21","PAID",32000,640,0,"AMOUNT",0,3200,"AMOUNT",3200,0,"AMOUNT",0,35840,0,""

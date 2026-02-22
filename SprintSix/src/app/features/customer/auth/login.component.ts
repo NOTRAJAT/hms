@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgIf } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -11,7 +11,7 @@ import { AuthSessionService } from '../../../core/services/auth-session.service'
   imports: [ReactiveFormsModule, NgIf, RouterLink],
   templateUrl: './login.component.html'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   isSubmitting = false;
   errorMessage = '';
 
@@ -26,6 +26,15 @@ export class LoginComponent {
     private session: AuthSessionService,
     private router: Router
   ) {}
+
+  ngOnInit(): void {
+    this.isSubmitting = true;
+    this.session.invalidateServerSession().subscribe({
+      next: () => {
+        this.isSubmitting = false;
+      }
+    });
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -44,15 +53,21 @@ export class LoginComponent {
     this.customerService.login(payload).subscribe({
       next: (result) => {
         this.isSubmitting = false;
+        if (result.role !== 'CUSTOMER') {
+          this.errorMessage = 'Use Admin / Staff Login for non-customer accounts.';
+          return;
+        }
         this.form.reset();
         this.session.set({
           userId: result.userId,
           name: result.name,
           email: result.email,
           mobile: result.mobile,
-          address: result.address
+          address: result.address,
+          role: result.role,
+          passwordChangeRequired: result.passwordChangeRequired
         });
-        this.router.navigateByUrl('/dashboard');
+        this.router.navigateByUrl(result.passwordChangeRequired ? '/change-password' : '/dashboard');
       },
       error: (error) => {
         this.isSubmitting = false;

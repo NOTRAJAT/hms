@@ -1,15 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { NgFor, NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import { RoomService } from '../../../core/services/room.service';
 import { RoomSearchResult } from '../../../core/models/booking.model';
 
-type RoomType = 'Standard' | 'Deluxe' | 'Suite';
-
 interface RoomGroup {
   roomType: string;
   price: number;
+  minPrice: number;
+  maxPrice: number;
   occupancyAdults: number;
   occupancyChildren: number;
   amenities: string[];
@@ -25,9 +25,10 @@ interface RoomGroup {
   imports: [ReactiveFormsModule, NgIf, NgFor],
   templateUrl: './search-availability.component.html'
 })
-export class SearchAvailabilityComponent {
+export class SearchAvailabilityComponent implements OnInit {
   readonly today = this.formatDate(new Date());
-  readonly roomTypes: RoomType[] = ['Standard', 'Deluxe', 'Suite'];
+  readonly fallbackRoomTypes: string[] = ['Standard', 'Deluxe', 'Suite', 'Supreme'];
+  roomTypes: string[] = [...this.fallbackRoomTypes];
   readonly amenityOptions = [
     { key: 'wifi', label: 'WiFi' },
     { key: 'tv', label: 'TV' },
@@ -42,7 +43,7 @@ export class SearchAvailabilityComponent {
     checkOut: [''],
     adults: [1],
     children: [0],
-    roomType: [''],
+    roomType: ['ALL'],
     priceMin: [0],
     priceMax: [20000],
     sizeMin: [0],
@@ -70,7 +71,7 @@ export class SearchAvailabilityComponent {
       checkOut: ['', [Validators.required]],
       adults: [1, [Validators.required, Validators.min(1), Validators.max(10)]],
       children: [0, [Validators.min(0), Validators.max(5)]],
-      roomType: ['', [Validators.required]],
+      roomType: ['ALL', [Validators.required]],
       priceMin: [0, [Validators.min(0)]],
       priceMax: [20000, [Validators.min(0)]],
       sizeMin: [0, [Validators.min(0)]],
@@ -89,6 +90,20 @@ export class SearchAvailabilityComponent {
       const checkOut = this.toDate(this.form.get('checkOut')?.value);
       if (checkIn && checkOut && checkOut < checkIn) {
         this.form.get('checkOut')?.setValue('', { emitEvent: false });
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    this.roomService.roomTypes().subscribe({
+      next: (types) => {
+        const normalized = (types || [])
+          .map((type) => String(type ?? '').trim())
+          .filter((type) => !!type);
+        this.roomTypes = Array.from(new Set([...this.fallbackRoomTypes, ...normalized]));
+      },
+      error: () => {
+        this.roomTypes = [...this.fallbackRoomTypes];
       }
     });
   }
@@ -237,6 +252,8 @@ export class SearchAvailabilityComponent {
         map.set(room.roomType, {
           roomType: room.roomType,
           price: room.price,
+          minPrice: room.price,
+          maxPrice: room.price,
           occupancyAdults: room.occupancyAdults,
           occupancyChildren: room.occupancyChildren,
           amenities: room.amenities,
@@ -247,9 +264,12 @@ export class SearchAvailabilityComponent {
         });
         return;
       }
+      existing.minPrice = Math.min(existing.minPrice, room.price);
+      existing.maxPrice = Math.max(existing.maxPrice, room.price);
       if (room.available && !existing.available) {
         existing.available = true;
         existing.firstAvailableRoomId = room.roomId;
+        existing.price = room.price;
       }
     });
     return Array.from(map.values());

@@ -4,6 +4,7 @@ import { HomeComponent } from './features/customer/registration/home.component';
 import { CustomerRegistrationComponent } from './features/customer/registration/customer-registration.component';
 import { RegistrationSuccessComponent } from './features/customer/registration/registration-success.component';
 import { LoginComponent } from './features/customer/auth/login.component';
+import { ChangePasswordComponent } from './features/customer/auth/change-password.component';
 import { PasswordResetComponent } from './features/customer/auth/password-reset.component';
 import { CustomerHomeComponent } from './features/customer/portal/customer-home.component';
 import { SearchAvailabilityComponent } from './features/customer/portal/search-availability.component';
@@ -14,6 +15,16 @@ import { ProfileComponent } from './features/customer/portal/profile.component';
 import { BookingConfirmationComponent } from './features/customer/portal/booking-confirmation.component';
 import { PaymentComponent } from './features/customer/portal/payment.component';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
+import { adminOrStaffGuard } from './core/guards/admin-or-staff.guard';
+import { AdminHomeComponent } from './features/admin/admin-home.component';
+import { AdminRoomsComponent } from './features/admin/admin-rooms.component';
+import { AdminBookingsComponent } from './features/admin/admin-bookings.component';
+import { AdminUsersComponent } from './features/admin/admin-users.component';
+import { AdminReportsComponent } from './features/admin/admin-reports.component';
+import { AdminBillsComponent } from './features/admin/admin-bills.component';
+import { AdminComplaintsComponent } from './features/admin/admin-complaints.component';
+import { AdminLoginComponent } from './features/admin/admin-login.component';
 
 export const routes: Routes = [
   {
@@ -24,6 +35,7 @@ export const routes: Routes = [
       { path: 'register', component: CustomerRegistrationComponent },
       { path: 'register/success', component: RegistrationSuccessComponent },
       { path: 'login', component: LoginComponent },
+      { path: 'change-password', component: ChangePasswordComponent, canActivate: [authGuard] },
       { path: 'password-reset', component: PasswordResetComponent },
       { path: 'dashboard', component: CustomerHomeComponent, canActivate: [authGuard] },
       { path: 'search', component: SearchAvailabilityComponent, canActivate: [authGuard] },
@@ -38,7 +50,15 @@ export const routes: Routes = [
           { path: 'confirm', component: BookingConfirmationComponent, canActivate: [authGuard] }
         ]
       },
-      { path: 'payment', component: PaymentComponent, canActivate: [authGuard] }
+      { path: 'payment', component: PaymentComponent, canActivate: [authGuard] },
+      { path: 'admin', component: AdminLoginComponent },
+      { path: 'admin/home', component: AdminHomeComponent, canActivate: [authGuard, adminGuard] },
+      { path: 'admin/rooms', component: AdminRoomsComponent, canActivate: [authGuard, adminGuard] },
+      { path: 'admin/bookings', component: AdminBookingsComponent, canActivate: [authGuard, adminGuard] },
+      { path: 'admin/bills', component: AdminBillsComponent, canActivate: [authGuard, adminGuard] },
+      { path: 'admin/complaints', component: AdminComplaintsComponent, canActivate: [authGuard, adminOrStaffGuard] },
+      { path: 'admin/users', component: AdminUsersComponent, canActivate: [authGuard, adminGuard] },
+      { path: 'admin/reports', component: AdminReportsComponent, canActivate: [authGuard, adminGuard] }
     ]
   }
 ];

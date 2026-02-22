@@ -1,6 +1,7 @@
 package com.hms.repo;
 
 import com.hms.domain.Customer;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,4 +14,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
   boolean existsByUsername(String username);
   boolean existsByEmailAndUserIdNot(String email, String userId);
   boolean existsByMobileAndUserIdNot(String mobile, String userId);
+  List<Customer> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrderByUsernameAsc(String username, String email);
+  List<Customer> findAllByOrderByUsernameAsc();
+  Optional<Customer> findByUserIdAndAdminTrue(String userId);
+  void deleteByUserId(String userId);
 }

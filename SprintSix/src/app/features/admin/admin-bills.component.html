@@ -1,0 +1,290 @@
+<section class="mx-auto max-w-7xl px-6 py-10">
+  <div class="app-card p-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-semibold">Billing Management</h1>
+      <button class="app-button px-5 py-2 text-sm" (click)="openCreate()">Add Bill</button>
+    </div>
+    <div class="mt-4 grid gap-3 md:grid-cols-4">
+      <div>
+        <input [(ngModel)]="q" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Bill ID / Customer Name / Customer ID" />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="invalidQuery">Use only letters, numbers, spaces, and hyphen.</p>
+      </div>
+      <select [(ngModel)]="paymentStatus" class="rounded-xl border border-stone-300 px-3 py-2 text-sm">
+        <option value="">All Payment Status</option>
+        <option value="PAID">Paid</option>
+        <option value="PENDING">Pending</option>
+      </select>
+      <input [(ngModel)]="fromDate" (ngModelChange)="onFromDateChange($event)" type="date" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" />
+      <input [(ngModel)]="toDate" [min]="fromDate || null" type="date" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" />
+      <div class="md:col-span-4">
+        <div class="flex flex-wrap gap-2">
+          <button class="app-button px-5 py-2 text-sm" (click)="load(true)" [disabled]="invalidDateRange || invalidQuery">Search Bills</button>
+          <button
+            class="app-button-outline px-5 py-2 text-sm"
+            (click)="downloadBillsCsv()"
+            [disabled]="invalidDateRange || invalidQuery || downloadingCsv"
+          >
+            {{ downloadingCsv ? 'Preparing CSV...' : 'Download CSV' }}
+          </button>
+        </div>
+      </div>
+      <p class="text-xs text-rose-700 md:col-span-4" *ngIf="invalidDateRange">From date cannot be after To date.</p>
+    </div>
+    <p class="mt-3 text-sm text-rose-700" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="mt-3 text-sm text-emerald-700" *ngIf="successMessage">{{ successMessage }}</p>
+
+    <div class="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-sm font-semibold text-stone-800">Revenue Snapshot</h3>
+        <p class="text-xs text-stone-600">
+          {{ fromDate || 'Start' }} to {{ toDate || 'Today' }}
+        </p>
+      </div>
+      <div class="grid gap-2 text-sm md:grid-cols-3">
+        <p>Total Revenue: <span class="font-semibold">INR {{ summary.totalRevenue }}</span></p>
+        <p>Invoice Room Cost Revenue: <span class="font-semibold">INR {{ summary.invoiceRevenue }}</span></p>
+        <p>Tax: <span class="font-semibold">INR {{ summary.taxRevenue }}</span></p>
+        <p>Discount Total: <span class="font-semibold">INR {{ summary.discountTotal }}</span></p>
+        <p>Bills Count: <span class="font-semibold">{{ summary.billCount }}</span></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-card mt-6 p-6" *ngIf="createMode">
+    <h2 class="text-xl font-semibold">Add Bill</h2>
+    <div class="mt-4 grid gap-3 md:grid-cols-2">
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Customer ID</label>
+        <div class="relative">
+          <div class="flex rounded-xl border border-stone-300 bg-white">
+            <span class="rounded-l-xl border-r border-stone-300 bg-stone-100 px-3 py-2 text-sm font-semibold text-stone-700">CUST-</span>
+            <input
+              [ngModel]="customerIdDigits"
+              (ngModelChange)="onCustomerDigitsChange($event)"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              class="w-full rounded-r-xl px-3 py-2 text-sm focus:outline-none"
+              placeholder="Enter customer number"
+              (keydown)="allowOnlyNumberInput($event)"
+            />
+          </div>
+          <div *ngIf="customerLookupLoading" class="mt-1 text-xs text-stone-500">Searching customers...</div>
+          <div *ngIf="customerSuggestions.length" class="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-xl border border-stone-200 bg-white shadow-md">
+            <button
+              type="button"
+              *ngFor="let suggestion of customerSuggestions"
+              class="block w-full border-b border-stone-100 px-3 py-2 text-left text-sm hover:bg-stone-50"
+              (click)="selectCustomerSuggestion(suggestion.userId)"
+            >
+              <span class="font-semibold text-stone-800">{{ suggestion.userId }}</span>
+              <span class="ml-2 text-stone-600">- {{ suggestion.name }}</span>
+            </button>
+          </div>
+        </div>
+        <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && createCustomerInvalid">Use a valid customer ID in format CUST-&lt;digits&gt;.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Room Charges</label>
+        <input [(ngModel)]="createForm.roomCharges" type="number" min="0" step="1" inputmode="numeric" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" (keydown)="allowOnlyNumberInput($event)" (input)="recalculateCreateTotal()" />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && createRoomChargesInvalid">Room charges must be 0 or more.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Additional Charges (%)</label>
+        <input [(ngModel)]="createForm.additionalFees" type="number" min="0" max="100" step="1" inputmode="numeric" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" (keydown)="allowOnlyNumberInput($event)" (input)="recalculateCreateTotal()" />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && createAdditionalFeesInvalid">Additional charges must be between 0 and 100.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Taxes (%)</label>
+        <input [(ngModel)]="createForm.taxes" type="number" min="0" max="100" step="1" inputmode="numeric" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" (keydown)="allowOnlyNumberInput($event)" (input)="recalculateCreateTotal()" />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && (createForm.taxes == null || createForm.taxes < 0 || createForm.taxes > 100)">Taxes must be between 0 and 100.</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Discounts (%)</label>
+        <input [(ngModel)]="createForm.discounts" type="number" min="0" max="100" step="1" inputmode="numeric" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" (keydown)="allowOnlyNumberInput($event)" (input)="recalculateCreateTotal()" />
+        <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && (createForm.discounts == null || createForm.discounts < 0 || createForm.discounts > 100)">Discounts must be between 0 and 100.</p>
+      </div>
+      <p class="text-xs text-rose-700 md:col-span-2" *ngIf="createSubmitted && createPercentInvalid">Taxes/Discounts must be between 0 and 100.</p>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-stone-600">Total Amount Due</label>
+        <input [ngModel]="createForm.totalAmountDue" readonly class="w-full rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 text-sm" />
+      </div>
+    </div>
+
+    <div class="mt-5 rounded-xl border border-stone-200 p-4">
+      <div class="mb-2 flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Service Bill Items</h3>
+        <button class="app-button px-3 py-1 text-xs" (click)="addCreateService()">Add Service</button>
+      </div>
+      <div class="space-y-3" *ngFor="let item of createForm.serviceItems; let i = index">
+        <div class="grid gap-2 md:grid-cols-4">
+          <label class="text-xs font-semibold text-stone-600">Service Date & Time
+            <input [(ngModel)]="item.serviceDateTime" type="datetime-local" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (change)="recalculateCreateTotal()" />
+            <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && !item.serviceDateTime">Service date & time is required.</p>
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Service Type
+            <select [(ngModel)]="item.serviceType" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (change)="recalculateCreateTotal()">
+              <option *ngFor="let st of serviceTypes" [value]="st">{{ st }}</option>
+            </select>
+            <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && !item.serviceType">Service type is required.</p>
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Description
+            <input [(ngModel)]="item.description" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" placeholder="Description" />
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Quantity
+            <input [(ngModel)]="item.quantity" type="number" min="1" step="1" inputmode="numeric" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (keydown)="allowOnlyNumberInput($event)" (ngModelChange)="normalizeServiceItemField(item, 'quantity'); recalculateCreateTotal()" />
+            <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && sanitizeNumber(item.quantity) < 1">Quantity must be at least 1.</p>
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Unit Price
+            <input [(ngModel)]="item.unitPrice" type="number" min="0" step="1" inputmode="numeric" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (keydown)="allowOnlyNumberInput($event)" (ngModelChange)="normalizeServiceItemField(item, 'unitPrice'); recalculateCreateTotal()" />
+            <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && (item.unitPrice == null || item.unitPrice < 0)">Unit price must be 0 or more.</p>
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Tax (%)
+            <input [(ngModel)]="item.taxPercent" type="number" min="0" max="100" step="1" inputmode="numeric" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (keydown)="allowOnlyNumberInput($event)" (ngModelChange)="normalizeServiceItemField(item, 'taxPercent'); recalculateCreateTotal()" />
+            <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && (item.taxPercent == null || item.taxPercent < 0 || item.taxPercent > 100)">Tax must be between 0 and 100.</p>
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Discount (%)
+            <input [(ngModel)]="item.discountPercent" type="number" min="0" max="100" step="1" inputmode="numeric" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (keydown)="allowOnlyNumberInput($event)" (ngModelChange)="normalizeServiceItemField(item, 'discountPercent'); recalculateCreateTotal()" />
+            <p class="mt-1 text-xs text-rose-700" *ngIf="createSubmitted && (item.discountPercent == null || item.discountPercent < 0 || item.discountPercent > 100)">Discount must be between 0 and 100.</p>
+          </label>
+          <button class="app-button-outline px-3 py-1 text-xs" (click)="removeCreateService(i)">Remove</button>
+        </div>
+      </div>
+      <p class="mt-2 text-xs text-rose-700" *ngIf="createSubmitted && createServiceItemsInvalid">Each service item must have date/time, type, quantity (>=1), and valid charges.</p>
+    </div>
+
+    <div class="mt-4 flex gap-2">
+      <button class="app-button px-5" (click)="submitCreate()" [disabled]="!isCreateValid || creating">{{ creating ? 'Saving...' : 'Create Bill' }}</button>
+      <button class="app-button-outline px-5" (click)="closeCreate()">Close</button>
+    </div>
+  </div>
+
+  <div class="app-card mt-6 overflow-x-auto p-4">
+    <table class="min-w-full text-sm">
+      <thead>
+        <tr class="text-left text-stone-600">
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('billId')">Bill ID</th>
+          <th class="px-2 py-2">Customer</th>
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('issueDate')">Date of Issue</th>
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('totalAmount')">Total Amount</th>
+          <th class="cursor-pointer px-2 py-2" (click)="toggleSort('paymentStatus')">Payment Status</th>
+          <th class="px-2 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let bill of bills" class="border-t border-stone-200">
+          <td class="px-2 py-2">{{ bill.billId }}</td>
+          <td class="px-2 py-2">{{ bill.customerName }} ({{ bill.customerUserId }})</td>
+          <td class="px-2 py-2">{{ bill.issueDate | date: 'dd-MM-yyyy' }}</td>
+          <td class="px-2 py-2">INR {{ bill.totalAmount }}</td>
+          <td class="px-2 py-2">{{ bill.paymentStatus === 'PAID' ? 'Paid' : 'Pending' }}</td>
+          <td class="px-2 py-2">
+            <div class="flex gap-2">
+              <button class="app-button px-3 py-1 text-xs" (click)="markAsPaid(bill)" [disabled]="bill.paymentStatus === 'PAID' || markPaying === bill.billId">
+                {{ bill.paymentStatus === 'PAID' ? 'Paid' : (markPaying === bill.billId ? 'Updating...' : 'Mark Paid') }}
+              </button>
+              <button class="app-button-outline px-3 py-1 text-xs" (click)="downloadBillPdf(bill)">Download PDF</button>
+              <button class="app-button-outline px-3 py-1 text-xs" (click)="openDescription(bill)">Description</button>
+              <button class="app-button-outline px-3 py-1 text-xs" (click)="openEdit(bill)" [disabled]="!bill.editable">Edit</button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="!bills.length">
+          <td colspan="6" class="px-2 py-6 text-center text-stone-600">{{ loading ? 'Loading bills...' : 'No bills found.' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="mt-4 flex items-center justify-between text-sm">
+      <p class="text-stone-600">Total: {{ totalItems }}</p>
+      <div class="flex items-center gap-2">
+        <button class="app-button px-4 py-1.5 text-xs" (click)="prevPage()" [disabled]="page === 0">Prev</button>
+        <span>Page {{ page + 1 }} / {{ totalPages || 1 }}</span>
+        <button class="app-button px-4 py-1.5 text-xs" (click)="nextPage()" [disabled]="page + 1 >= totalPages">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-card mt-6 p-6" *ngIf="editTarget">
+    <h2 class="text-xl font-semibold">Edit Bill {{ editTarget.billId }}</h2>
+    <div class="mt-4 grid gap-3 md:grid-cols-2">
+      <input [(ngModel)]="editForm.roomCharges" type="number" min="0" step="1" inputmode="numeric" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Room Charges" (keydown)="allowOnlyNumberInput($event)" (input)="recalculateEditTotal()" />
+      <input [(ngModel)]="editForm.additionalFees" type="number" min="0" max="100" step="1" inputmode="numeric" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Additional Charges (%)" (keydown)="allowOnlyNumberInput($event)" (input)="recalculateEditTotal()" />
+      <input [(ngModel)]="editForm.taxes" type="number" min="0" max="100" step="1" inputmode="numeric" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Taxes (%)" (keydown)="allowOnlyNumberInput($event)" (input)="recalculateEditTotal()" />
+      <input [(ngModel)]="editForm.discounts" type="number" min="0" max="100" step="1" inputmode="numeric" class="rounded-xl border border-stone-300 px-3 py-2 text-sm" placeholder="Discounts (%)" (keydown)="allowOnlyNumberInput($event)" (input)="recalculateEditTotal()" />
+      <input [ngModel]="editForm.totalAmountDue" readonly class="rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 text-sm" placeholder="Total Amount Due" />
+    </div>
+    <p class="mt-2 text-xs text-rose-700" *ngIf="editSubmitted && editAdditionalFeesInvalid">Additional charges must be between 0 and 100.</p>
+    <p class="mt-2 text-xs text-rose-700" *ngIf="editSubmitted && editPercentInvalid">Taxes/Discounts must be between 0 and 100.</p>
+
+    <div class="mt-5 rounded-xl border border-stone-200 p-4">
+      <div class="mb-2 flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Service Bill Items</h3>
+        <button class="app-button px-3 py-1 text-xs" (click)="addEditService()">Add Service</button>
+      </div>
+      <div class="space-y-3" *ngFor="let item of editForm.serviceItems; let i = index">
+        <div class="grid gap-2 md:grid-cols-4">
+          <label class="text-xs font-semibold text-stone-600">Service Date & Time
+            <input [(ngModel)]="item.serviceDateTime" type="datetime-local" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (change)="recalculateEditTotal()" />
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Service Type
+            <select [(ngModel)]="item.serviceType" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (change)="recalculateEditTotal()">
+              <option *ngFor="let st of serviceTypes" [value]="st">{{ st }}</option>
+            </select>
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Description
+            <input [(ngModel)]="item.description" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" placeholder="Description" />
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Quantity
+            <input [(ngModel)]="item.quantity" type="number" min="1" step="1" inputmode="numeric" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (keydown)="allowOnlyNumberInput($event)" (ngModelChange)="normalizeServiceItemField(item, 'quantity'); recalculateEditTotal()" />
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Unit Price
+            <input [(ngModel)]="item.unitPrice" type="number" min="0" step="1" inputmode="numeric" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (keydown)="allowOnlyNumberInput($event)" (ngModelChange)="normalizeServiceItemField(item, 'unitPrice'); recalculateEditTotal()" />
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Tax (%)
+            <input [(ngModel)]="item.taxPercent" type="number" min="0" max="100" step="1" inputmode="numeric" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (keydown)="allowOnlyNumberInput($event)" (ngModelChange)="normalizeServiceItemField(item, 'taxPercent'); recalculateEditTotal()" />
+          </label>
+          <label class="text-xs font-semibold text-stone-600">Discount (%)
+            <input [(ngModel)]="item.discountPercent" type="number" min="0" max="100" step="1" inputmode="numeric" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-xs" (keydown)="allowOnlyNumberInput($event)" (ngModelChange)="normalizeServiceItemField(item, 'discountPercent'); recalculateEditTotal()" />
+          </label>
+          <button class="app-button-outline px-3 py-1 text-xs" (click)="removeEditService(i)">Remove</button>
+        </div>
+      </div>
+      <p class="mt-2 text-xs text-rose-700" *ngIf="editSubmitted && !isEditValid">Each service item must have date/time, type, quantity (>=1), and valid charges.</p>
+    </div>
+
+    <div class="mt-4 flex gap-2">
+      <button class="app-button px-5" (click)="submitEdit()" [disabled]="!isEditValid || updating">{{ updating ? 'Updating...' : 'Save Bill Changes' }}</button>
+      <button class="app-button-outline px-5" (click)="closeEdit()">Close</button>
+    </div>
+  </div>
+
+  <div class="fixed inset-0 z-40 bg-black/35" *ngIf="descriptionTarget" (click)="closeDescription()"></div>
+  <section class="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl" *ngIf="descriptionTarget">
+    <div class="flex items-start justify-between gap-3">
+      <h3 class="text-lg font-semibold">Bill Description - {{ descriptionTarget.billId }}</h3>
+      <button class="app-button-outline px-3 py-1 text-xs" (click)="closeDescription()">Close</button>
+    </div>
+    <p class="mt-2 text-sm text-stone-700">Customer: {{ descriptionTarget.customerName }} ({{ descriptionTarget.customerUserId }})</p>
+    <p class="text-sm text-stone-700">Total Amount: INR {{ descriptionTarget.totalAmount }}</p>
+    <div class="mt-3 rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-700">
+      <p class="font-semibold text-stone-800">Charge Breakdown</p>
+      <p>Room Charges: INR {{ descriptionTarget.roomCharges }}</p>
+      <p>Service Charges: INR {{ descriptionTarget.serviceCharges }}</p>
+      <p>Additional Charges: {{ descriptionTarget.additionalFees }}{{ descriptionTarget.editable ? '%' : '' }}</p>
+      <p>Tax: {{ descriptionTarget.taxes }}{{ descriptionTarget.editable ? '%' : '' }}</p>
+      <p>Discount: {{ descriptionTarget.discounts }}{{ descriptionTarget.editable ? '%' : '' }}</p>
+      <p class="mt-1 text-xs text-stone-600">For editable admin bills, Additional Charges/Tax/Discount are stored as percentages. For invoice bills they are stored as amounts.</p>
+    </div>
+
+    <div class="mt-4 max-h-[60vh] overflow-auto rounded-xl border border-stone-200 p-3">
+      <div *ngIf="!descriptionTarget.serviceItems?.length" class="text-sm text-stone-600">No service item descriptions available for this bill.</div>
+      <div *ngFor="let item of descriptionTarget.serviceItems; let i = index" class="mb-3 rounded-lg border border-stone-100 p-3">
+        <p class="text-sm font-semibold text-stone-800">#{{ i + 1 }} {{ item.serviceType }}</p>
+        <p class="text-xs text-stone-600">Date: {{ item.serviceDateTime || '-' }}</p>
+        <p class="text-xs text-stone-600">Qty: {{ item.quantity }} | Unit Price: INR {{ item.unitPrice }} | Tax: {{ item.taxPercent }}% | Discount: {{ item.discountPercent }}%</p>
+        <p class="mt-1 text-sm text-stone-700">Description: {{ item.description || 'No description' }}</p>
+      </div>
+    </div>
+  </section>
+</section>

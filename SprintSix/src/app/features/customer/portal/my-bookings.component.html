@@ -33,11 +33,17 @@
       <div class="mt-4 grid gap-3 md:grid-cols-3">
         <div>
           <label class="app-label">Check-in Date</label>
-          <input type="date" class="mt-1 app-input" formControlName="checkInDate" />
+          <input type="date" class="mt-1 app-input" formControlName="checkInDate" [min]="modifyMinCheckInDate" />
         </div>
         <div>
           <label class="app-label">Check-out Date</label>
-          <input type="date" class="mt-1 app-input" formControlName="checkOutDate" />
+          <input
+            type="date"
+            class="mt-1 app-input"
+            formControlName="checkOutDate"
+            [min]="modifyMinCheckOutDate"
+            [disabled]="!modifyForm.get('checkInDate')?.value"
+          />
         </div>
         <div>
           <label class="app-label">Room Type</label>
@@ -72,6 +78,15 @@
         <p>New Total: INR {{ modificationPreview.newTotalAmount }}</p>
         <p *ngIf="modificationPreview.additionalAmount > 0">Additional Charges: INR {{ modificationPreview.additionalAmount }}</p>
         <p *ngIf="modificationPreview.refundAmount > 0">Refund Due: INR {{ modificationPreview.refundAmount }}</p>
+        <div *ngIf="modificationPreview.refundAmount > 0" class="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-emerald-800">
+          <p class="text-sm font-semibold">Refund Summary (As Per Policy)</p>
+          <p class="mt-1 text-sm">
+            Eligible Refund: <span class="font-semibold">INR {{ modificationPreview.refundAmount }}</span>
+          </p>
+          <p class="text-sm">
+            Refund Percentage: <span class="font-semibold">{{ modificationRefundPercent(modificationPreview) }}%</span>
+          </p>
+        </div>
         <p class="mt-2 app-subtitle">{{ modificationPreview.message }}</p>
 
         <div class="mt-3 flex flex-wrap gap-2">

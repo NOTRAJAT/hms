@@ -1,6 +1,7 @@
 package com.hms.api.dto;
 
 import java.time.Instant;
+import java.util.List;
 
 public class ComplaintResponse {
   private String id;
@@ -17,6 +18,7 @@ public class ComplaintResponse {
   private String acknowledgementMessage;
   private String supportResponse;
   private String resolutionNotes;
+  private List<ComplaintCheckpointResponse> checkpointUpdates;
 
   public ComplaintResponse(
       String id,
@@ -32,7 +34,8 @@ public class ComplaintResponse {
       boolean editable,
       String acknowledgementMessage,
       String supportResponse,
-      String resolutionNotes
+      String resolutionNotes,
+      List<ComplaintCheckpointResponse> checkpointUpdates
   ) {
     this.id = id;
     this.userId = userId;
@@ -48,6 +51,7 @@ public class ComplaintResponse {
     this.acknowledgementMessage = acknowledgementMessage;
     this.supportResponse = supportResponse;
     this.resolutionNotes = resolutionNotes;
+    this.checkpointUpdates = checkpointUpdates;
   }
 
   public String getId() {
@@ -104,5 +108,9 @@ public class ComplaintResponse {
 
   public String getResolutionNotes() {
     return resolutionNotes;
+  }
+
+  public List<ComplaintCheckpointResponse> getCheckpointUpdates() {
+    return checkpointUpdates;
   }
 }
