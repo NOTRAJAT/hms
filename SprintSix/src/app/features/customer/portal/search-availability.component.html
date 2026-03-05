@@ -1,9 +1,9 @@
-<section class="py-10 px-4">
-  <div class="grid gap-6 lg:grid-cols-[280px_1fr]" [formGroup]="form">
+<section class="mx-auto max-w-7xl px-4 py-10 md:py-14">
+  <div class="grid gap-6 lg:grid-cols-[300px_1fr]" [formGroup]="form">
     <aside class="app-panel app-sidebar rounded-none lg:rounded-r-2xl">
       <div class="app-panel-header">
-        <h2 class="text-sm font-semibold uppercase tracking-widest text-amber-800/70">Filters</h2>
-        <div class="text-xs font-semibold text-amber-800/70">Sort</div>
+        <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">Filters</h2>
+        <div class="text-xs font-semibold text-[var(--ink-muted)]">Sort</div>
       </div>
       <div class="app-panel-body space-y-4">
         <div>
@@ -43,10 +43,10 @@
       </div>
     </aside>
 
-    <div class="space-y-6 px-6 lg:pr-10">
-      <div class="app-card p-8">
-        <h1 class="text-3xl font-semibold">Search Room Availability</h1>
-        <p class="mt-2 text-sm app-subtitle">Choose dates, guests, and room type to view available options.</p>
+    <div class="space-y-6 px-2 md:px-6 lg:pr-10">
+      <div class="app-card app-hero-card app-animate-enter p-8">
+        <h1 class="app-section-title">Search Room Availability</h1>
+        <p class="mt-2 text-sm app-subtitle">Choose dates, guests, and room type to discover your best-fit stay.</p>
 
         <form class="mt-6 grid gap-4 md:grid-cols-3" (ngSubmit)="search()">
           <div>
@@ -111,7 +111,7 @@
             </p>
           </div>
 
-          <div class="md:col-span-3 flex flex-wrap items-center gap-3">
+          <div class="md:col-span-3 flex flex-wrap items-center gap-3 pt-1">
             <button type="button" [disabled]="form.invalid" class="app-button" (click)="search()">
               Search
             </button>
@@ -123,14 +123,23 @@
         <p class="text-sm app-subtitle">No rooms available for the selected dates. Please try different dates.</p>
       </div>
 
+      <div *ngIf="searched && overlappingUserBookings.length > 0" class="app-card border border-amber-200 bg-amber-50/70 p-4">
+        <p class="text-sm text-amber-900">
+          You already have booking(s) in this date range:
+        </p>
+        <p class="mt-1 text-xs text-amber-900" *ngFor="let booking of overlappingUserBookings">
+          {{ booking.bookingId }} ({{ booking.roomType }}): {{ booking.checkInDate | date: 'dd-MM-yyyy' }} to {{ booking.checkOutDate | date: 'dd-MM-yyyy' }}
+        </p>
+      </div>
+
       <div *ngIf="groupedResults.length > 0" class="space-y-4">
-        <div *ngFor="let room of groupedResults" class="app-card p-6">
-          <div class="flex flex-wrap items-start justify-between gap-4">
+        <div *ngFor="let room of groupedResults" class="app-card app-hover-lift app-animate-stagger-1 p-6">
+          <div class="flex flex-wrap items-start justify-between gap-5">
             <div class="flex flex-wrap items-start gap-4">
               <img
                 [src]="room.imageUrl"
                 [alt]="room.roomType + ' room'"
-                class="h-24 w-32 rounded-xl object-cover border border-amber-200"
+                class="h-24 w-32 rounded-xl border border-[var(--border)] object-cover shadow-sm"
                 onerror="this.src='/assets/Standard.png'"
               />
               <div>
@@ -145,7 +154,7 @@
                 </div>
               </div>
             </div>
-            <div class="text-right">
+            <div class="text-right md:min-w-52">
               <p class="text-2xl font-semibold" *ngIf="room.minPrice !== room.maxPrice">₹{{ room.minPrice }} - ₹{{ room.maxPrice }}</p>
               <p class="text-2xl font-semibold" *ngIf="room.minPrice === room.maxPrice">₹{{ room.price }}</p>
               <p class="text-xs app-subtitle">per night</p>

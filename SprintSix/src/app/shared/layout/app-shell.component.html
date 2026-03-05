@@ -1,93 +1,127 @@
 <div class="min-h-screen app-shell">
-  <header class="app-header">
-    <div class="mx-auto mt-2 flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5">
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-widest text-amber-800/70">Hotel Management System</p>
-        <p class="text-lg font-semibold">Customer Portal</p>
+  <header class="app-header app-animate-enter">
+    <div class="app-nav-shell">
+      <div class="app-brand">
+        <p class="app-brand-eyebrow">Bringing Revolution to Reservations</p>
+        <div class="flex items-center gap-3">
+          <p class="app-brand-title">Renaissance Stay</p>
+          <span class="app-badge">{{ roleLabel }}</span>
+        </div>
       </div>
 
-      <nav class="flex flex-wrap items-center gap-2 text-sm font-medium" *ngIf="session.value; else publicNav">
-        <ng-container *ngIf="isAdmin; else nonAdminNav">
-          <a routerLink="/admin/home" routerLinkActive="app-pill-active" class="app-pill">
-            Home
-          </a>
-          <a routerLink="/admin/rooms" routerLinkActive="app-pill-active" class="app-pill">
-            Room Management
-          </a>
-          <a routerLink="/admin/bookings" routerLinkActive="app-pill-active" class="app-pill">
-            Booking Management
-          </a>
-          <a routerLink="/admin/complaints" routerLinkActive="app-pill-active" class="app-pill">
-            Complaint Dashboard
-          </a>
-          <a routerLink="/admin/bills" routerLinkActive="app-pill-active" class="app-pill">
-            Billing Management
-          </a>
-          <a routerLink="/admin/users" routerLinkActive="app-pill-active" class="app-pill">
-            User Management
-          </a>
-          <a routerLink="/admin/reports" routerLinkActive="app-pill-active" class="app-pill">
-            Reports and Analytics
-          </a>
-          <a routerLink="/profile" routerLinkActive="app-pill-active" class="app-pill">
-            Profile
-          </a>
-        </ng-container>
-        <ng-template #nonAdminNav>
-          <ng-container *ngIf="isStaff; else customerNav">
-            <a routerLink="/admin/complaints" routerLinkActive="app-pill-active" class="app-pill">
-              Complaint Dashboard
-            </a>
-            <a routerLink="/profile" routerLinkActive="app-pill-active" class="app-pill">
-              Profile
-            </a>
-          </ng-container>
-        </ng-template>
-        <ng-template #customerNav>
-          <a routerLink="/dashboard" routerLinkActive="app-pill-active" class="app-pill">
-            Home
-          </a>
-          <a routerLink="/search" routerLinkActive="app-pill-active" class="app-pill">
-            Search Room Availability
-          </a>
-          <a routerLink="/bookings" routerLinkActive="app-pill-active" class="app-pill">
-            Booking History
-          </a>
-          <a routerLink="/contact" routerLinkActive="app-pill-active" class="app-pill">
-            Contact Us
-          </a>
-          <a routerLink="/complaints" routerLinkActive="app-pill-active" class="app-pill">
-            Register Complaint
-          </a>
-          <a routerLink="/complaints/view" routerLinkActive="app-pill-active" class="app-pill">
-            View Complaints
-          </a>
-          <a routerLink="/profile" routerLinkActive="app-pill-active" class="app-pill">
-            Profile
-          </a>
-        </ng-template>
-      </nav>
-
-      <ng-template #publicNav>
-        <nav class="flex flex-wrap items-center gap-2 text-sm font-medium">
-          <a routerLink="/" routerLinkActive="app-pill-active" class="app-pill">
-            Home
-          </a>
-          <a routerLink="/register" routerLinkActive="app-pill-active" class="app-pill">
-            Register
-          </a>
-          <a routerLink="/login" routerLinkActive="app-pill-active" class="app-pill">
-            Login
-          </a>
-          <a routerLink="/admin" routerLinkActive="app-pill-active" class="app-pill">
-            Admin / Staff Login
-          </a>
+      <div class="app-nav-cluster flex min-w-0 items-center gap-2 xl:gap-3">
+        <nav [class]="desktopNavClass + ' hidden items-center gap-2 xl:flex'" *ngIf="session.value; else desktopPublicNav">
+          <ng-container [ngTemplateOutlet]="roleAwareNav"></ng-container>
         </nav>
-      </ng-template>
+
+        <ng-template #desktopPublicNav>
+          <nav [class]="desktopNavClass + ' hidden items-center gap-2 xl:flex'">
+            <ng-container [ngTemplateOutlet]="publicLinks"></ng-container>
+          </nav>
+        </ng-template>
+
+        <button
+          type="button"
+          class="app-nav-toggle xl:hidden"
+          (click)="toggleMobileMenu()"
+          aria-label="Toggle menu"
+          [attr.aria-expanded]="mobileMenuOpen"
+        >
+          <span class="app-nav-toggle-line"></span>
+          <span class="app-nav-toggle-line"></span>
+          <span class="app-nav-toggle-line"></span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <main>
+  <div *ngIf="mobileMenuOpen" class="app-drawer-backdrop xl:hidden" (click)="closeMobileMenu()"></div>
+  <aside class="app-drawer xl:hidden" [class.app-drawer-open]="mobileMenuOpen">
+    <div class="app-drawer-header">
+      <div>
+        <p class="app-brand-eyebrow">Navigation</p>
+        <p class="app-brand-title text-xl">Menu</p>
+      </div>
+      <button type="button" class="app-drawer-close" (click)="closeMobileMenu()" aria-label="Close menu">×</button>
+    </div>
+    <nav class="mt-4 grid gap-2">
+      <ng-container *ngIf="session.value; else mobilePublicNav">
+        <ng-container [ngTemplateOutlet]="roleAwareNav"></ng-container>
+      </ng-container>
+      <ng-template #mobilePublicNav>
+        <ng-container [ngTemplateOutlet]="publicLinks"></ng-container>
+      </ng-template>
+    </nav>
+  </aside>
+
+  <main class="app-main">
     <router-outlet></router-outlet>
   </main>
+
+  <footer class="app-footer">
+    <div class="mx-auto grid max-w-[90rem] gap-6 px-4 py-8 md:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
+      <div>
+        <p class="app-brand-eyebrow">Renaissance Stay</p>
+        <p class="mt-2 text-lg font-semibold text-[var(--ink-strong)]">Bringing Revolution to Reservations</p>
+        <p class="mt-2 text-sm app-subtitle">Seamless bookings, payments, and guest support in one modern workspace.</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">Quick Links</p>
+        <div class="mt-3 grid gap-2 text-sm">
+          <a routerLink="/" class="app-footer-link">Home</a>
+          <a routerLink="/search" class="app-footer-link">Search Rooms</a>
+          <a routerLink="/bookings" class="app-footer-link">My Bookings</a>
+          <a routerLink="/profile" class="app-footer-link">Profile</a>
+        </div>
+      </div>
+
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">Contact</p>
+        <div class="mt-3 space-y-2 text-sm app-footer-meta">
+          <p>12 Garden Lane, City Center</p>
+          <p>support&#64;hotel.example</p>
+          <p>+91 90000 12345</p>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-[var(--border-soft)] px-6 py-4 text-center text-xs app-footer-meta">
+      © {{ currentYear }} Renaissance Stay. Bringing revolution to reservations.
+    </div>
+  </footer>
 </div>
+
+<ng-template #roleAwareNav>
+  <ng-container *ngIf="isAdmin; else nonAdminNav">
+    <a routerLink="/admin/home" routerLinkActive="app-nav-link-active" class="app-nav-link">Home</a>
+    <a routerLink="/admin/rooms" routerLinkActive="app-nav-link-active" class="app-nav-link">Room Management</a>
+    <a routerLink="/admin/bookings" routerLinkActive="app-nav-link-active" class="app-nav-link">Booking Management</a>
+    <a routerLink="/admin/complaints" routerLinkActive="app-nav-link-active" class="app-nav-link">Complaint Dashboard</a>
+    <a routerLink="/admin/bills" routerLinkActive="app-nav-link-active" class="app-nav-link">Billing Management</a>
+    <a routerLink="/admin/users" routerLinkActive="app-nav-link-active" class="app-nav-link">User Management</a>
+    <a routerLink="/admin/reports" routerLinkActive="app-nav-link-active" class="app-nav-link">Reports & Analytics</a>
+    <a routerLink="/profile" routerLinkActive="app-nav-link-active" class="app-nav-link">Profile</a>
+  </ng-container>
+  <ng-template #nonAdminNav>
+    <ng-container *ngIf="isStaff; else customerNav">
+      <a routerLink="/admin/complaints" routerLinkActive="app-nav-link-active" class="app-nav-link">Complaint Dashboard</a>
+      <a routerLink="/profile" routerLinkActive="app-nav-link-active" class="app-nav-link">Profile</a>
+    </ng-container>
+  </ng-template>
+  <ng-template #customerNav>
+    <a routerLink="/dashboard" routerLinkActive="app-nav-link-active" class="app-nav-link">Home</a>
+    <a routerLink="/search" routerLinkActive="app-nav-link-active" class="app-nav-link">Search Availability</a>
+    <a routerLink="/bookings" routerLinkActive="app-nav-link-active" class="app-nav-link">Booking History</a>
+    <a routerLink="/contact" routerLinkActive="app-nav-link-active" class="app-nav-link">Contact</a>
+    <a routerLink="/complaints" routerLinkActive="app-nav-link-active" class="app-nav-link">Register Complaint</a>
+    <a routerLink="/complaints/view" routerLinkActive="app-nav-link-active" class="app-nav-link">View Complaints</a>
+    <a routerLink="/profile" routerLinkActive="app-nav-link-active" class="app-nav-link">Profile</a>
+  </ng-template>
+</ng-template>
+
+<ng-template #publicLinks>
+  <a routerLink="/" routerLinkActive="app-nav-link-active" class="app-nav-link">Home</a>
+  <a routerLink="/register" routerLinkActive="app-nav-link-active" class="app-nav-link">Register</a>
+  <a routerLink="/login" routerLinkActive="app-nav-link-active" class="app-nav-link">Login</a>
+  <a routerLink="/admin" routerLinkActive="app-nav-link-active" class="app-nav-link">Admin / Staff Login</a>
+</ng-template>

@@ -1,7 +1,8 @@
-<section class="mx-auto max-w-xl px-6 py-10">
-  <div class="app-card p-8">
-    <h1 class="text-3xl font-semibold">Welcome Back</h1>
-    <p class="mt-2 text-sm app-subtitle">Enter your credentials to access your dashboard.</p>
+<section class="mx-auto max-w-xl px-6 py-10 md:py-14">
+  <div class="app-card app-hero-card app-animate-enter p-8 md:p-10">
+    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-muted)]">Customer Access</p>
+    <h1 class="mt-3 text-4xl font-semibold md:text-5xl">Welcome Back</h1>
+    <p class="mt-3 text-sm leading-6 app-subtitle">Sign in to continue with your bookings and account.</p>
 
     <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
       <div>
@@ -31,7 +32,7 @@
         </p>
       </div>
 
-      <p *ngIf="errorMessage" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+      <p *ngIf="errorMessage" class="rounded-lg border border-rose-200 bg-[var(--danger-bg)] px-3 py-2 text-sm text-rose-700">
         {{ errorMessage }}
       </p>
 
@@ -44,8 +45,8 @@
       </button>
 
       <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
-        <a routerLink="/password-reset" class="text-sm text-amber-900/80 hover:text-amber-900">Forgot Password?</a>
-        <a routerLink="/register" class="text-sm text-amber-900/80 hover:text-amber-900">Register Now</a>
+        <a routerLink="/password-reset" class="text-[var(--clay-deep)] hover:underline">Forgot Password?</a>
+        <a routerLink="/register" class="text-[var(--clay-deep)] hover:underline">Register Now</a>
       </div>
     </form>
   </div>

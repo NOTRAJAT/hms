@@ -2,7 +2,7 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 const NAME_PATTERN = /^[A-Za-z ]+$/;
 const USERNAME_PATTERN = /^\S+$/;
-const MOBILE_PATTERN = /^\d{8,10}$/;
+const MOBILE_PATTERN = /^[789]\d{9}$/;
 
 export const nameValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = String(control.value ?? '').trim();

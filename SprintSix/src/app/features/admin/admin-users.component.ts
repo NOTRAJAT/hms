@@ -15,6 +15,12 @@ import { AdminService } from '../../core/services/admin.service';
   templateUrl: './admin-users.component.html'
 })
 export class AdminUsersComponent implements OnInit {
+  readonly countryCodeOptions = ['+91'];
+  createCountryCode = '+91';
+  editCountryCode = '+91';
+  createMobileNumber = '';
+  editMobileNumber = '';
+
   users: AdminUserItem[] = [];
   loading = false;
   errorMessage = '';
@@ -144,6 +150,8 @@ export class AdminUsersComponent implements OnInit {
       name: '',
       department: ''
     };
+    this.createCountryCode = '+91';
+    this.createMobileNumber = '';
   }
 
   closeCreate(): void {
@@ -156,7 +164,11 @@ export class AdminUsersComponent implements OnInit {
       return;
     }
     this.creating = true;
-    this.adminService.createUser(this.createForm).subscribe({
+    const payload: AdminUserCreatePayload = {
+      ...this.createForm,
+      mobile: this.composeMobile(this.createCountryCode, this.createMobileNumber)
+    };
+    this.adminService.createUser(payload).subscribe({
       next: (result) => {
         this.creating = false;
         this.createdTempPassword = result.temporaryPassword;
@@ -173,10 +185,12 @@ export class AdminUsersComponent implements OnInit {
   startEdit(user: AdminUserItem): void {
     this.selected = user;
     this.editSubmitted = false;
+    this.editCountryCode = '+91';
+    this.editMobileNumber = this.extractMobileNumber(user.mobile);
     this.editForm = {
       role: user.role || 'CUSTOMER',
       email: user.email,
-      mobile: user.mobile,
+      mobile: this.composeMobile(this.editCountryCode, this.editMobileNumber),
       status: user.status,
       department: user.department || ''
     };
@@ -195,7 +209,11 @@ export class AdminUsersComponent implements OnInit {
       return;
     }
     this.updating = true;
-    this.adminService.updateUser(this.selected.userId, this.editForm).subscribe({
+    const payload: AdminUserUpdatePayload = {
+      ...this.editForm,
+      mobile: this.composeMobile(this.editCountryCode, this.editMobileNumber)
+    };
+    this.adminService.updateUser(this.selected.userId, payload).subscribe({
       next: () => {
         this.updating = false;
         this.successMessage = 'User account updated successfully.';
@@ -275,7 +293,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   get mobileInvalid(): boolean {
-    return !/^\+?[0-9]{10,15}$/.test(this.createForm.mobile);
+    return this.createCountryCode !== '+91' || !/^[789]\d{9}$/.test(this.createMobileNumber);
   }
 
   get editEmailInvalid(): boolean {
@@ -283,7 +301,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   get editMobileInvalid(): boolean {
-    return !/^\+?[0-9]{10,15}$/.test(this.editForm.mobile);
+    return this.editCountryCode !== '+91' || !/^[789]\d{9}$/.test(this.editMobileNumber);
   }
 
   get isCreateValid(): boolean {
@@ -311,16 +329,12 @@ export class AdminUsersComponent implements OnInit {
   }
 
   sanitizeMobile(field: 'create' | 'edit'): void {
-    const source = field === 'create' ? this.createForm.mobile : this.editForm.mobile;
-    let value = source || '';
-    value = value.replace(/[^0-9+]/g, '');
-    if (value.includes('+')) {
-      value = `+${value.replace(/\+/g, '')}`;
-    }
     if (field === 'create') {
-      this.createForm.mobile = value;
+      this.createMobileNumber = this.createMobileNumber.replace(/\D/g, '').slice(0, 10);
+      this.createForm.mobile = this.composeMobile(this.createCountryCode, this.createMobileNumber);
     } else {
-      this.editForm.mobile = value;
+      this.editMobileNumber = this.editMobileNumber.replace(/\D/g, '').slice(0, 10);
+      this.editForm.mobile = this.composeMobile(this.editCountryCode, this.editMobileNumber);
     }
   }
 
@@ -332,9 +346,19 @@ export class AdminUsersComponent implements OnInit {
     if (event.key >= '0' && event.key <= '9') {
       return;
     }
-    if (event.key === '+') {
-      return;
-    }
     event.preventDefault();
+  }
+
+  private composeMobile(countryCode: string, mobileNumber: string): string {
+    return `${countryCode}${mobileNumber.trim()}`;
+  }
+
+  private extractMobileNumber(mobile: string): string {
+    const value = String(mobile ?? '').trim();
+    if (value.startsWith('+91') && value.length >= 13) {
+      return value.slice(3, 13);
+    }
+    const digits = value.replace(/\D/g, '');
+    return digits.length <= 10 ? digits : digits.slice(-10);
   }
 }

@@ -209,7 +209,7 @@ CREATE TABLE `customers` (
 
 LOCK TABLES `customers` WRITE;
 /*!40000 ALTER TABLE `customers` DISABLE KEYS */;
-INSERT INTO `customers` VALUES (1,'Admin HQ','admin@hms.local',0,_binary '\0','+911111111111','System Admin','$2a$10$sXtutq3M5r7g.SV8WhvA3uJIRsRbfafe1x6ztztleT3EPj3VLjgsG','ADMIN-000001','admin',_binary '',_binary '\0');
+INSERT INTO `customers` VALUES (1,'Admin HQ','admin@hms.local',0,_binary '\0','+919111111111','System Admin','$2a$10$sXtutq3M5r7g.SV8WhvA3uJIRsRbfafe1x6ztztleT3EPj3VLjgsG','ADMIN-000001','admin',_binary '',_binary '\0');
 /*!40000 ALTER TABLE `customers` ENABLE KEYS */;
 UNLOCK TABLES;
 

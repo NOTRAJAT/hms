@@ -48,7 +48,7 @@
             inputmode="numeric"
             formControlName="mobileNumber"
             class="flex-1 app-input"
-            placeholder="12345678"
+            placeholder="9876543210"
             maxlength="10"
             pattern="[0-9]*"
             autocomplete="tel"
@@ -60,7 +60,7 @@
           (form.get('countryCode')?.invalid || form.get('mobileNumber')?.invalid)"
           class="mt-0.5 text-xs text-rose-600"
         >
-          Enter a valid mobile number.
+          Enter a valid mobile number (+91, 10 digits, starts with 7, 8, or 9).
         </p>
         <p *ngIf="serverErrors['mobileNumber']" class="mt-0.5 text-xs text-rose-600">
           {{ serverErrors['mobileNumber'] }}

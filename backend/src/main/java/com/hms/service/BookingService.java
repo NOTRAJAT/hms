@@ -78,6 +78,7 @@ public class BookingService {
     if (!isCvvValid(request.getCardNumber(), request.getCvv())) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid CVV. Please check again.");
     }
+    validateOtp(request.getOtp());
 
     int nights = (int) (request.getCheckOutDate().toEpochDay() - request.getCheckInDate().toEpochDay());
     int basePrice = room.getPricePerNight() * nights;
@@ -177,9 +178,9 @@ public class BookingService {
         booking.getTotalAmount(),
         booking.getPaymentMethod(),
         LocalDateTime.ofInstant(booking.getCreatedAt(), ZoneId.systemDefault()).format(TIMESTAMP_FORMAT),
-        "Hotel Management System",
+        "Renaissance Stay",
         "12 Garden Lane, City Center",
-        "support@hotel.example",
+        "support@renaissancestay.example",
         "+91 90000 12345"
     );
   }
@@ -464,6 +465,16 @@ public class BookingService {
       return cvv.matches("^\\d{4}$");
     }
     return cvv.matches("^\\d{3}$");
+  }
+
+  private void validateOtp(String otp) {
+    if ("123456".equals(otp)) {
+      return;
+    }
+    if ("000000".equals(otp)) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Your OTP session has expired. Please try again.");
+    }
+    throw new ApiException(HttpStatus.BAD_REQUEST, "Transaction failed. Invalid OTP.");
   }
 
   private String generateId(String prefix) {

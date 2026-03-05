@@ -68,9 +68,23 @@
       </div>
       <div>
         <label class="app-label" for="mobile">Phone Number</label>
-        <input id="mobile" type="text" formControlName="mobile" class="mt-1 app-input" placeholder="+911234567890" (input)="mobileInput()" />
-        <p *ngIf="form.get('mobile')?.touched && form.get('mobile')?.invalid" class="mt-1 text-xs text-rose-600">
-          Please enter a valid phone number with country code.
+        <div class="mt-1 flex gap-2">
+          <select formControlName="countryCode" class="w-28 app-select">
+            <option *ngFor="let code of countryCodes" [value]="code">{{ code }}</option>
+          </select>
+          <input
+            id="mobile"
+            type="text"
+            formControlName="mobileNumber"
+            class="flex-1 app-input"
+            placeholder="9876543210"
+            inputmode="numeric"
+            maxlength="10"
+            (input)="mobileInput()"
+          />
+        </div>
+        <p *ngIf="(form.get('countryCode')?.touched || form.get('mobileNumber')?.touched) && (form.get('countryCode')?.invalid || form.get('mobileNumber')?.invalid)" class="mt-1 text-xs text-rose-600">
+          Please enter a valid +91 phone number (10 digits, starts with 7, 8, or 9).
         </p>
         <p *ngIf="serverErrors['mobile']" class="mt-1 text-xs text-rose-600">{{ serverErrors['mobile'] }}</p>
       </div>

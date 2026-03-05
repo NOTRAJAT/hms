@@ -53,6 +53,7 @@ export interface PaymentPayload {
   cardNumber: string;
   expiryDate: string;
   cvv: string;
+  otp: string;
   billingAddress?: string;
 }
 

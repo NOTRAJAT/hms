@@ -65,7 +65,11 @@ export class ComplaintsComponent {
     }
     this.bookingApi.list(userId).subscribe({
       next: (items) => {
-        this.bookingIds = items.map((item) => item.bookingId);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        this.bookingIds = items
+          .filter((item) => this.isComplaintEligible(item.checkInDate, today))
+          .map((item) => item.bookingId);
       },
       error: () => {
         this.bookingIds = [];
@@ -224,5 +228,17 @@ export class ComplaintsComponent {
         this.errorMessage = error?.error?.error || 'Unable to submit complaint right now.';
       }
     });
+  }
+
+  private isComplaintEligible(checkInDate: string, today: Date): boolean {
+    const normalized = String(checkInDate ?? '').slice(0, 10);
+    if (!normalized) {
+      return false;
+    }
+    const checkIn = new Date(`${normalized}T00:00:00`);
+    if (Number.isNaN(checkIn.getTime())) {
+      return false;
+    }
+    return checkIn.getTime() <= today.getTime();
   }
 }

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { NgIf } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthSessionService } from '../../../core/services/auth-session.service';
 import { CustomerService } from '../../../core/services/customer.service';
@@ -8,10 +8,11 @@ import { CustomerService } from '../../../core/services/customer.service';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, NgIf],
+  imports: [ReactiveFormsModule, NgIf, NgFor],
   templateUrl: './profile.component.html'
 })
 export class ProfileComponent {
+  readonly countryCodes = ['+91'];
   isEditing = false;
   isSaving = false;
   successMessage = '';
@@ -19,12 +20,14 @@ export class ProfileComponent {
   serverErrors: Record<string, string> = {};
 
   private readonly fullNamePattern = /^[A-Za-z ]{2,50}$/;
-  private readonly phonePattern = /^\+[0-9]{1,3}[0-9]{10}$/;
+  private readonly countryCodePattern = /^\+91$/;
+  private readonly mobileNumberPattern = /^[789]\d{9}$/;
 
   form = this.fb.group({
     name: ['', [Validators.required, Validators.pattern(this.fullNamePattern)]],
     email: ['', [Validators.required, Validators.email]],
-    mobile: ['', [Validators.required, Validators.pattern(this.phonePattern)]],
+    countryCode: ['+91', [Validators.required, Validators.pattern(this.countryCodePattern)]],
+    mobileNumber: ['', [Validators.required, Validators.pattern(this.mobileNumberPattern)]],
     address: ['', [Validators.maxLength(100)]]
   });
 
@@ -50,7 +53,8 @@ export class ProfileComponent {
     this.form.patchValue({
       name: data.name,
       email: data.email,
-      mobile: data.mobile,
+      countryCode: '+91',
+      mobileNumber: this.extractMobileNumber(data.mobile),
       address: data.address
     });
   }
@@ -77,10 +81,12 @@ export class ProfileComponent {
     }
 
     this.isSaving = true;
+    const countryCode = String(this.form.value.countryCode ?? '').trim();
+    const mobileNumber = String(this.form.value.mobileNumber ?? '').trim();
     this.customerService.updateProfile(this.session.value.userId, {
       name: String(this.form.value.name ?? '').trim(),
       email: String(this.form.value.email ?? '').trim(),
-      mobile: String(this.form.value.mobile ?? '').trim(),
+      mobile: `${countryCode}${mobileNumber}`,
       address: String(this.form.value.address ?? '').trim()
     }).subscribe({
       next: (result) => {
@@ -114,11 +120,20 @@ export class ProfileComponent {
   }
 
   mobileInput(): void {
-    const current = String(this.form.get('mobile')?.value ?? '');
-    const cleaned = current.replace(/[^0-9+]/g, '');
+    const current = String(this.form.get('mobileNumber')?.value ?? '');
+    const cleaned = current.replace(/\D/g, '').slice(0, 10);
     if (cleaned !== current) {
-      this.form.get('mobile')?.setValue(cleaned, { emitEvent: false });
+      this.form.get('mobileNumber')?.setValue(cleaned, { emitEvent: false });
     }
+  }
+
+  private extractMobileNumber(value: string | null | undefined): string {
+    const raw = String(value ?? '').trim();
+    if (raw.startsWith('+91') && raw.length >= 13) {
+      return raw.slice(3, 13);
+    }
+    const digits = raw.replace(/\D/g, '');
+    return digits.length <= 10 ? digits : digits.slice(-10);
   }
 
   logout(): void {

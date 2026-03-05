@@ -16,11 +16,11 @@ public class RegisterRequest {
   private String email;
 
   @NotBlank
-  @Pattern(regexp = "^\\+?\\d{1,4}$")
+  @Pattern(regexp = "^\\+91$")
   private String countryCode;
 
   @NotBlank
-  @Pattern(regexp = "^\\d{8,10}$")
+  @Pattern(regexp = "^[789]\\d{9}$")
   private String mobileNumber;
 
   @NotBlank

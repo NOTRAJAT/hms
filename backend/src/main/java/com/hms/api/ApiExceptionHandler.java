@@ -14,9 +14,10 @@ public class ApiExceptionHandler {
   private static final Map<String, String> FIELD_MESSAGES = Map.ofEntries(
       Map.entry("name", "Name must be at least 3 characters long and contain only letters."),
       Map.entry("email", "Enter a valid email address."),
-      Map.entry("countryCode", "Enter a valid mobile number."),
-      Map.entry("mobileNumber", "Enter a valid mobile number."),
-      Map.entry("mobile", "Enter a valid mobile number."),
+      Map.entry("countryCode", "Only +91 country code is supported."),
+      Map.entry("mobileNumber", "Enter a valid +91 mobile number (10 digits, starts with 7, 8, or 9)."),
+      Map.entry("mobile", "Enter a valid +91 mobile number (10 digits, starts with 7, 8, or 9)."),
+      Map.entry("customerMobile", "Enter a valid +91 mobile number (10 digits, starts with 7, 8, or 9)."),
       Map.entry("address", "Address must be at least 10 characters long."),
       Map.entry("username", "Username must be at least 5 characters and unique."),
       Map.entry("password", "Password must be at least 8 characters and include a mix of uppercase, lowercase, number, and special character."),

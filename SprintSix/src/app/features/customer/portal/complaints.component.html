@@ -81,7 +81,7 @@
     <!-- BOOKING ID -->
     <div>
       <label class="app-label" for="bookingId">Booking ID</label>
-      <select id="bookingId" formControlName="bookingId" class="mt-1 app-select">
+      <select id="bookingId" formControlName="bookingId" class="mt-1 app-select" [disabled]="!bookingIds.length">
         <option value="" disabled>Select Booking ID</option>
         <option *ngFor="let bookingId of bookingIds" [value]="bookingId">
           {{ bookingId }}
@@ -91,6 +91,9 @@
       <p class="text-xs text-rose-600 mt-1"
          *ngIf="form.get('bookingId')?.touched && form.get('bookingId')?.invalid">
         Booking ID is required.
+      </p>
+      <p class="text-xs app-subtitle mt-1" *ngIf="!bookingIds.length">
+        Complaints can be registered only on or after check-in date.
       </p>
     </div>
 

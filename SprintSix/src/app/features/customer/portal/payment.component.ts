@@ -93,12 +93,17 @@ export class PaymentComponent {
   paymentMethod = 'Card';
   message = '';
   messageType: 'error' | 'warning' | '' = '';
+  stage: 'card' | 'otp' = 'card';
+  isMockLoading = false;
+  isSubmitting = false;
+  otpPopupOpen = false;
 
   form = this.fb.group({
     cardholderName: [''],
     cardNumber: [''],
     expiry: [''],
     cvv: [''],
+    otp: [''],
     billingAddress: ['']
   });
 
@@ -114,6 +119,7 @@ export class PaymentComponent {
       cardNumber: ['', [Validators.required, Validators.pattern(/^\d{16}$/), luhnValidator]],
       expiry: ['', [Validators.required, expiryValidator]],
       cvv: ['', [Validators.required, Validators.pattern(/^\d{3,4}$/)]],
+      otp: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
       billingAddress: ['', [Validators.minLength(5)]]
     });
 
@@ -140,12 +146,21 @@ export class PaymentComponent {
         paymentMethod: params.get('paymentMethod') ?? 'credit'
       };
       this.paymentMethod = params.get('paymentMethod') ?? 'Card';
+      this.stage = 'card';
+      this.isMockLoading = false;
+      this.isSubmitting = false;
+      this.otpPopupOpen = false;
+      this.form.get('otp')?.setValue('');
     });
   }
 
-  pay(): void {
-    if (this.form.invalid || !this.context) {
-      this.form.markAllAsTouched();
+  proceedToOtp(): void {
+    if (!this.context || this.isMockLoading || this.isSubmitting || this.stage === 'otp') {
+      return;
+    }
+
+    this.markCardFieldsTouched();
+    if (!this.areCardDetailsValid()) {
       return;
     }
 
@@ -162,10 +177,68 @@ export class PaymentComponent {
       return;
     }
 
+    this.message = '';
+    this.messageType = '';
+    this.isMockLoading = true;
+    setTimeout(() => {
+      this.isMockLoading = false;
+      this.stage = 'otp';
+      this.otpPopupOpen = true;
+      this.form.get('otp')?.setValue('123456');
+      this.form.get('otp')?.markAsUntouched();
+    }, 1200);
+  }
+
+  pay(): void {
+    if (this.stage !== 'otp') {
+      this.proceedToOtp();
+      return;
+    }
+    if (!this.context || this.isMockLoading || this.isSubmitting) {
+      return;
+    }
+
+    const otpControl = this.form.get('otp');
+    otpControl?.markAsTouched();
+    if (!otpControl || otpControl.invalid) {
+      return;
+    }
+
+    this.isMockLoading = true;
+    this.isSubmitting = true;
+    const otpValue = String(this.form.value.otp ?? '');
+    setTimeout(() => {
+      const otpCheck = this.checkOtpSimulation(otpValue);
+      if (otpCheck !== 'ok') {
+        this.isMockLoading = false;
+        this.isSubmitting = false;
+        if (otpCheck === 'expired') {
+          this.messageType = 'warning';
+          this.message = 'Your OTP session has expired. Redirecting to home...';
+        } else {
+          this.messageType = 'error';
+          this.message = 'Transaction failed. Invalid OTP. Redirecting to home...';
+        }
+        this.redirectToHomeAfterDelay();
+        return;
+      }
+      this.submitPayment(otpValue);
+    }, 1800);
+  }
+
+  private submitPayment(otpValue: string): void {
+    if (!this.context || !this.session.value) {
+      this.isMockLoading = false;
+      this.isSubmitting = false;
+      return;
+    }
+
     if (this.context.mode === 'modify') {
       if (!this.context.bookingId) {
         this.messageType = 'error';
         this.message = 'Modification failed due to payment error. Please try again.';
+        this.isMockLoading = false;
+        this.isSubmitting = false;
         return;
       }
       const payload: ModifyBookingConfirmPayload = {
@@ -180,11 +253,15 @@ export class PaymentComponent {
       };
       this.bookingApi.confirmModification(this.context.bookingId, payload).subscribe({
         next: () => {
+          this.isMockLoading = false;
+          this.isSubmitting = false;
           this.router.navigate(['/bookings'], {
             queryParams: { modified: '1' }
           });
         },
         error: (error) => {
+          this.isMockLoading = false;
+          this.isSubmitting = false;
           const message = error?.error?.error;
           this.messageType = 'error';
           this.message = message || 'Modification failed due to payment error. Please try again.';
@@ -210,9 +287,12 @@ export class PaymentComponent {
       cardNumber: String(this.form.value.cardNumber ?? ''),
       expiryDate: String(this.form.value.expiry ?? ''),
       cvv: String(this.form.value.cvv ?? ''),
+      otp: otpValue,
       billingAddress: String(this.form.value.billingAddress ?? '')
     }).subscribe({
       next: (booking) => {
+        this.isMockLoading = false;
+        this.isSubmitting = false;
         this.router.navigate(['/booking/confirm'], {
           queryParams: {
             roomId: booking.roomId,
@@ -233,9 +313,15 @@ export class PaymentComponent {
         });
       },
       error: (error) => {
+        this.isMockLoading = false;
+        this.isSubmitting = false;
         const message = error?.error?.error;
         this.messageType = 'error';
         this.message = message || 'Transaction failed. Please check your details and try again.';
+        if (typeof message === 'string' && message.toLowerCase().includes('otp')) {
+          this.message = `${message} Redirecting to home...`;
+          this.redirectToHomeAfterDelay();
+        }
       }
     });
   }
@@ -243,6 +329,24 @@ export class PaymentComponent {
   retry(): void {
     this.message = '';
     this.messageType = '';
+  }
+
+  backToCard(): void {
+    if (this.isMockLoading || this.isSubmitting) {
+      return;
+    }
+    this.stage = 'card';
+    this.otpPopupOpen = false;
+    this.form.get('otp')?.setValue('');
+    this.retry();
+  }
+
+  setDemoOtp(value: string): void {
+    if (this.isMockLoading || this.isSubmitting) {
+      return;
+    }
+    this.form.get('otp')?.setValue(value);
+    this.form.get('otp')?.markAsTouched();
   }
 
   formatExpiry(): void {
@@ -257,6 +361,17 @@ export class PaymentComponent {
     }
   }
 
+  formatOtp(): void {
+    const control = this.form.get('otp');
+    if (!control) {
+      return;
+    }
+    const onlyDigits = String(control.value ?? '').replace(/\D/g, '').slice(0, 6);
+    if (onlyDigits !== control.value) {
+      control.setValue(onlyDigits, { emitEvent: false });
+    }
+  }
+
   private validateCvvByCardType(): boolean {
     const number = String(this.form.value.cardNumber ?? '');
     const cvv = String(this.form.value.cvv ?? '');
@@ -265,6 +380,40 @@ export class PaymentComponent {
       return /^\d{4}$/.test(cvv);
     }
     return /^\d{3}$/.test(cvv);
+  }
+
+  private markCardFieldsTouched(): void {
+    this.form.get('cardholderName')?.markAsTouched();
+    this.form.get('cardNumber')?.markAsTouched();
+    this.form.get('expiry')?.markAsTouched();
+    this.form.get('cvv')?.markAsTouched();
+    this.form.get('billingAddress')?.markAsTouched();
+  }
+
+  private areCardDetailsValid(): boolean {
+    return !!this.form.get('cardholderName')?.valid
+      && !!this.form.get('cardNumber')?.valid
+      && !!this.form.get('expiry')?.valid
+      && !!this.form.get('cvv')?.valid
+      && !!this.form.get('billingAddress')?.valid;
+  }
+
+  private checkOtpSimulation(otp: string): 'ok' | 'invalid' | 'expired' {
+    if (otp === '123456') {
+      return 'ok';
+    }
+    if (otp === '000000') {
+      return 'expired';
+    }
+    return 'invalid';
+  }
+
+  private redirectToHomeAfterDelay(): void {
+    setTimeout(() => {
+      this.otpPopupOpen = false;
+      this.stage = 'card';
+      this.router.navigateByUrl('/dashboard');
+    }, 2000);
   }
 
   get isModificationPayment(): boolean {

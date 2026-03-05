@@ -19,7 +19,7 @@ public class AdminDataInitializer {
       admin.setUserId("ADMIN-000001");
       admin.setName("System Admin");
       admin.setEmail("admin@hms.local");
-      admin.setMobile("+911111111111");
+      admin.setMobile("+919111111111");
       admin.setAddress("Admin HQ");
       admin.setUsername("admin");
       admin.setPasswordHash(encoder.encode("Admin@123"));

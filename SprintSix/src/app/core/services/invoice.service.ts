@@ -4,71 +4,98 @@ import { InvoiceResponse } from '../models/booking.model';
 
 @Injectable({ providedIn: 'root' })
 export class InvoiceService {
-  private readonly hotelName = 'Hotel Management System';
+  private readonly hotelName = 'Renaissance Stay';
+  private readonly hotelTagline = 'bringing revolution to reservations';
   private readonly hotelAddress = '12 Garden Lane, City Center';
-  private readonly hotelEmail = 'support@hotel.example';
+  private readonly hotelEmail = 'support@renaissancestay.example';
   private readonly hotelPhone = '+91 90000 12345';
-  private readonly hotelLogoLabel = 'HMS';
+  private readonly hotelLogoLabel = 'RS';
 
   downloadInvoice(record: InvoiceResponse): void {
     const doc = new jsPDF();
-    const line = (y: number) => doc.line(14, y, 196, y);
+    const line = (y: number, color: [number, number, number] = [210, 184, 144]) => {
+      doc.setDrawColor(...color);
+      doc.line(14, y, 196, y);
+    };
     const printedAt = this.formatDateTime(record.invoiceDateTime);
+    const hotelName = this.hotelName;
+    const hotelAddress = this.hotelAddress;
+    const hotelEmail = this.hotelEmail;
+    const hotelPhone = this.hotelPhone;
 
+    doc.setFillColor(246, 238, 226);
+    doc.roundedRect(10, 8, 190, 32, 4, 4, 'F');
     doc.setDrawColor(176, 132, 75);
+    doc.roundedRect(14, 12, 18, 18, 3, 3, 'S');
     doc.setFillColor(245, 233, 214);
-    doc.roundedRect(14, 10, 18, 18, 3, 3, 'FD');
+    doc.roundedRect(14, 12, 18, 18, 3, 3, 'F');
     doc.setFont('times', 'bold');
     doc.setFontSize(11);
-    doc.text(this.hotelLogoLabel, 23, 21, { align: 'center' });
+    doc.text(this.hotelLogoLabel, 23, 23, { align: 'center' });
 
-    doc.setFontSize(16);
-    doc.text(record.hotelName || this.hotelName, 38, 17);
+    doc.setTextColor(76, 47, 33);
+    doc.setFontSize(18);
+    doc.text(hotelName, 38, 20);
+    doc.setFont('times', 'italic');
+    doc.setFontSize(10);
+    doc.text(this.hotelTagline, 38, 26);
     doc.setFont('times', 'normal');
     doc.setFontSize(10);
-    doc.text(record.hotelAddress || this.hotelAddress, 38, 23);
-    doc.text(`${record.hotelEmail || this.hotelEmail} | ${record.hotelSupportNumber || this.hotelPhone}`, 38, 28);
-    line(30);
+    doc.text(hotelAddress, 38, 32);
+    doc.text(`${hotelEmail} | ${hotelPhone}`, 38, 37);
+    doc.setTextColor(0, 0, 0);
+    line(42);
 
     doc.setFontSize(12);
-    doc.text(`Invoice #: ${record.invoiceId}`, 14, 38);
-    doc.text(`Booking ID: ${record.bookingId}`, 14, 44);
-    doc.text(`Transaction ID: ${record.transactionId}`, 14, 50);
-    doc.text(`Invoice Date: ${printedAt}`, 14, 56);
+    doc.setFont('times', 'bold');
+    doc.text(`Invoice #: ${record.invoiceId}`, 14, 50);
+    doc.setFont('times', 'normal');
+    doc.text(`Booking ID: ${record.bookingId}`, 14, 56);
+    doc.text(`Transaction ID: ${record.transactionId}`, 14, 62);
+    doc.text(`Invoice Date: ${printedAt}`, 14, 68);
 
-    line(60);
+    line(72);
     doc.setFontSize(11);
-    doc.text('Customer Details', 14, 68);
+    doc.setFont('times', 'bold');
+    doc.text('Customer Details', 14, 80);
+    doc.setFont('times', 'normal');
     doc.setFontSize(10);
-    doc.text(`Name: ${record.customerName}`, 14, 74);
-    doc.text(`Email: ${record.customerEmail}`, 14, 79);
-    doc.text(`Mobile: ${record.customerMobile}`, 14, 84);
+    doc.text(`Name: ${record.customerName}`, 14, 86);
+    doc.text(`Email: ${record.customerEmail}`, 14, 91);
+    doc.text(`Mobile: ${record.customerMobile}`, 14, 96);
 
-    line(88);
+    line(100);
     doc.setFontSize(11);
-    doc.text('Booking Details', 14, 96);
+    doc.setFont('times', 'bold');
+    doc.text('Booking Details', 14, 108);
+    doc.setFont('times', 'normal');
     doc.setFontSize(10);
-    doc.text(`Room Type: ${record.roomType}`, 14, 102);
-    doc.text(`Occupancy Limit: ${record.occupancyAdults} adults, ${record.occupancyChildren} children`, 14, 107);
-    doc.text(`Price per Night: INR ${record.pricePerNight}`, 14, 112);
-    doc.text(`Check-in: ${record.checkInDate}`, 14, 117);
-    doc.text(`Check-out: ${record.checkOutDate}`, 14, 122);
-    doc.text(`Nights: ${record.nights}`, 14, 127);
-    doc.text(`Guests: ${record.adults} adults, ${record.children} children`, 14, 132);
+    doc.text(`Room Type: ${record.roomType}`, 14, 114);
+    doc.text(`Occupancy Limit: ${record.occupancyAdults} adults, ${record.occupancyChildren} children`, 14, 119);
+    doc.text(`Price per Night: INR ${record.pricePerNight}`, 14, 124);
+    doc.text(`Check-in: ${record.checkInDate}`, 14, 129);
+    doc.text(`Check-out: ${record.checkOutDate}`, 14, 134);
+    doc.text(`Nights: ${record.nights}`, 14, 139);
+    doc.text(`Guests: ${record.adults} adults, ${record.children} children`, 14, 144);
 
-    line(136);
+    line(148);
     doc.setFontSize(11);
-    doc.text('Charges', 14, 144);
+    doc.setFont('times', 'bold');
+    doc.text('Charges', 14, 156);
+    doc.setFont('times', 'normal');
     doc.setFontSize(10);
-    doc.text(`Base Price: INR ${record.basePrice}`, 14, 150);
-    doc.text(`GST (10%): INR ${record.gstAmount}`, 14, 155);
-    doc.text(`Service Charge (2%): INR ${record.serviceChargeAmount}`, 14, 160);
-    doc.text(`Total Paid: INR ${record.totalAmount}`, 14, 166);
-    doc.text(`Payment Method: ${record.paymentMethod}`, 14, 171);
+    doc.text(`Base Price: INR ${record.basePrice}`, 14, 162);
+    doc.text(`GST (10%): INR ${record.gstAmount}`, 14, 167);
+    doc.text(`Service Charge (2%): INR ${record.serviceChargeAmount}`, 14, 172);
+    doc.setFont('times', 'bold');
+    doc.text(`Total Paid: INR ${record.totalAmount}`, 14, 178);
+    doc.setFont('times', 'normal');
+    doc.text(`Payment Method: ${record.paymentMethod}`, 14, 183);
 
-    line(176);
+    line(188, [176, 132, 75]);
     doc.setFontSize(10);
-    doc.text('Thank you for choosing us.', 14, 184);
+    doc.setFont('times', 'italic');
+    doc.text(`Thank you for choosing ${hotelName}.`, 14, 196);
 
     doc.save(`invoice-${record.invoiceId}.pdf`);
   }

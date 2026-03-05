@@ -24,7 +24,7 @@ public class CustomerService {
   private static final SecureRandom RANDOM = new SecureRandom();
   private static final Pattern NAME_PATTERN = Pattern.compile("^[A-Za-z ]{2,50}$");
   private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
-  private static final Pattern MOBILE_WITH_COUNTRY_CODE_PATTERN = Pattern.compile("^\\+[0-9]{1,3}[0-9]{10}$");
+  private static final Pattern MOBILE_WITH_COUNTRY_CODE_PATTERN = Pattern.compile("^\\+91[789]\\d{9}$");
 
   private final CustomerRepository repository;
   private final StaffRepository staffRepository;
@@ -112,7 +112,7 @@ public class CustomerService {
     }
     if (!MOBILE_WITH_COUNTRY_CODE_PATTERN.matcher(mobile).matches()) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "mobile",
-          "Please enter a valid phone number with country code.");
+          "Please enter a valid +91 mobile number.");
     }
     if (address.length() > 100) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "address",

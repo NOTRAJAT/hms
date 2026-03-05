@@ -58,18 +58,23 @@
       </div>
       <div>
         <label class="mb-1 block text-xs font-semibold text-stone-600">Phone</label>
-        <input
-          [(ngModel)]="createForm.mobile"
-          type="tel"
-          inputmode="numeric"
-          maxlength="16"
-          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
-          placeholder="+91XXXXXXXXXX"
-          (keydown)="blockPhoneInput($event)"
-          (input)="sanitizeMobile('create')"
-          (blur)="touchCreateField('mobile')"
-        />
-        <p class="mt-1 text-xs text-rose-700" *ngIf="(createTouched.mobile || createSubmitted) && mobileInvalid">Enter valid phone with country code.</p>
+        <div class="flex gap-2">
+          <select [(ngModel)]="createCountryCode" class="w-24 rounded-xl border border-stone-300 px-3 py-2 text-sm">
+            <option *ngFor="let code of countryCodeOptions" [value]="code">{{ code }}</option>
+          </select>
+          <input
+            [(ngModel)]="createMobileNumber"
+            type="tel"
+            inputmode="numeric"
+            maxlength="10"
+            class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+            placeholder="9876543210"
+            (keydown)="blockPhoneInput($event)"
+            (input)="sanitizeMobile('create')"
+            (blur)="touchCreateField('mobile')"
+          />
+        </div>
+        <p class="mt-1 text-xs text-rose-700" *ngIf="(createTouched.mobile || createSubmitted) && mobileInvalid">Enter a valid +91 mobile number (10 digits, starts with 7, 8, or 9).</p>
       </div>
       <div class="md:col-span-2">
         <label class="mb-1 block text-xs font-semibold text-stone-600">Full Name (optional)</label>
@@ -175,16 +180,22 @@
       </div>
       <div>
         <label class="mb-1 block text-xs font-semibold text-stone-600">Mobile</label>
-        <input
-          [(ngModel)]="editForm.mobile"
-          type="tel"
-          inputmode="numeric"
-          maxlength="16"
-          class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
-          (keydown)="blockPhoneInput($event)"
-          (input)="sanitizeMobile('edit')"
-        />
-        <p class="mt-1 text-xs text-rose-700" *ngIf="editSubmitted && editMobileInvalid">Enter valid phone with country code.</p>
+        <div class="flex gap-2">
+          <select [(ngModel)]="editCountryCode" class="w-24 rounded-xl border border-stone-300 px-3 py-2 text-sm">
+            <option *ngFor="let code of countryCodeOptions" [value]="code">{{ code }}</option>
+          </select>
+          <input
+            [(ngModel)]="editMobileNumber"
+            type="tel"
+            inputmode="numeric"
+            maxlength="10"
+            class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm"
+            placeholder="9876543210"
+            (keydown)="blockPhoneInput($event)"
+            (input)="sanitizeMobile('edit')"
+          />
+        </div>
+        <p class="mt-1 text-xs text-rose-700" *ngIf="editSubmitted && editMobileInvalid">Enter a valid +91 mobile number (10 digits, starts with 7, 8, or 9).</p>
       </div>
     </div>
     <div class="mt-4 flex gap-2">

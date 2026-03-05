@@ -1,8 +1,8 @@
-<section class="mx-auto max-w-5xl px-6 py-10">
-  <div class="app-card p-8" *ngIf="context; else missing">
+<section class="mx-auto max-w-5xl px-6 py-10 md:py-14">
+  <div class="app-card app-animate-enter p-8" *ngIf="context; else missing">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-semibold">Payment</h1>
+        <h1 class="app-section-title">Payment</h1>
         <p class="mt-2 text-sm app-subtitle">
           {{ isModificationPayment ? 'Complete payment to confirm booking modification.' : 'Complete your payment to confirm the booking.' }}
         </p>
@@ -12,7 +12,7 @@
 
     <div class="mt-6 grid gap-6 lg:grid-cols-3">
       <div class="lg:col-span-2">
-        <form class="grid gap-4" [formGroup]="form" (ngSubmit)="pay()">
+        <form class="grid gap-4" [formGroup]="form" (ngSubmit)="proceedToOtp()">
           <div>
             <label class="app-label" for="cardholderName">Cardholder Name</label>
             <input id="cardholderName" type="text" formControlName="cardholderName" class="mt-1 app-input" />
@@ -70,8 +70,12 @@
             </p>
           </div>
 
+          <div *ngIf="isMockLoading && !otpPopupOpen" class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {{ stage === 'card' ? 'Validating card and sending OTP...' : 'Processing payment securely...' }}
+          </div>
+
           <div
-            *ngIf="message"
+            *ngIf="message && !otpPopupOpen"
             class="rounded-lg px-3 py-2 text-sm"
             [class.border-rose-200]="messageType === 'error'"
             [class.bg-rose-50]="messageType === 'error'"
@@ -84,16 +88,16 @@
           </div>
 
           <div class="flex flex-wrap gap-3">
-            <button type="submit" class="app-button">
-              {{ isModificationPayment ? 'Pay Difference & Confirm' : 'Pay Now' }}
+            <button type="submit" class="app-button" [disabled]="isMockLoading || isSubmitting">
+              Validate Card & Send OTP
             </button>
-            <button type="button" class="app-button-outline" (click)="retry()">Retry</button>
+            <button type="button" class="app-button-outline" (click)="retry()" [disabled]="isMockLoading || isSubmitting">Retry</button>
           </div>
         </form>
       </div>
 
       <div>
-        <div class="app-card p-6">
+        <div class="app-card app-hero-card p-6">
           <h2 class="text-lg font-semibold">Summary</h2>
           <div class="mt-4 text-sm space-y-2">
             <div class="flex items-center justify-between">
@@ -114,6 +118,64 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="otpPopupOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-[2px]" [formGroup]="form">
+    <div class="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl">
+      <h2 class="text-xl font-semibold">OTP Verification</h2>
+      <p class="mt-1 text-sm app-subtitle">Enter OTP to complete payment.</p>
+
+      <div class="mt-4">
+        <label class="app-label" for="otpPopup">OTP</label>
+        <input
+          id="otpPopup"
+          type="text"
+          inputmode="numeric"
+          formControlName="otp"
+          class="mt-1 app-input"
+          maxlength="6"
+          placeholder="Enter 6-digit OTP"
+          (input)="formatOtp()"
+        />
+        <p *ngIf="form.get('otp')?.touched && form.get('otp')?.invalid" class="mt-1 text-xs text-rose-600">
+          Enter a valid 6-digit OTP.
+        </p>
+        <p class="mt-2 text-xs app-subtitle">
+          Demo OTPs: <span class="font-medium">123456</span> success, <span class="font-medium">000000</span> expired, any other OTP fails.
+        </p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button type="button" class="app-button-outline px-3 py-1 text-xs" (click)="setDemoOtp('123456')">Use Success OTP</button>
+          <button type="button" class="app-button-outline px-3 py-1 text-xs" (click)="setDemoOtp('000000')">Use Expired OTP</button>
+          <button type="button" class="app-button-outline px-3 py-1 text-xs" (click)="setDemoOtp('111111')">Use Failed OTP</button>
+        </div>
+      </div>
+
+      <div *ngIf="isMockLoading" class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        Processing payment securely...
+      </div>
+
+      <div
+        *ngIf="message"
+        class="mt-4 rounded-lg px-3 py-2 text-sm"
+        [class.border-rose-200]="messageType === 'error'"
+        [class.bg-rose-50]="messageType === 'error'"
+        [class.text-rose-700]="messageType === 'error'"
+        [class.border-amber-200]="messageType === 'warning'"
+        [class.bg-amber-50]="messageType === 'warning'"
+        [class.text-amber-800]="messageType === 'warning'"
+      >
+        {{ message }}
+      </div>
+
+      <div class="mt-5 flex flex-wrap justify-end gap-2">
+        <button type="button" class="app-button-outline px-4 py-2" (click)="backToCard()" [disabled]="isMockLoading || isSubmitting">
+          Edit Card Details
+        </button>
+        <button type="button" class="app-button px-4 py-2" (click)="pay()" [disabled]="isMockLoading || isSubmitting">
+          {{ isModificationPayment ? 'Pay Difference & Confirm' : 'Pay Now' }}
+        </button>
       </div>
     </div>
   </div>

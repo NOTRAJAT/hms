@@ -19,6 +19,7 @@ public class PaymentRequest {
   private String customerEmail;
 
   @NotBlank
+  @Pattern(regexp = "^\\+91[789]\\d{9}$")
   private String customerMobile;
 
   @NotBlank
@@ -63,6 +64,10 @@ public class PaymentRequest {
   @NotBlank
   @Pattern(regexp = "^\\d{3,4}$")
   private String cvv;
+
+  @NotBlank
+  @Pattern(regexp = "^\\d{6}$")
+  private String otp;
 
   private String billingAddress;
 
@@ -200,5 +205,13 @@ public class PaymentRequest {
 
   public void setBillingAddress(String billingAddress) {
     this.billingAddress = billingAddress;
+  }
+
+  public String getOtp() {
+    return otp;
+  }
+
+  public void setOtp(String otp) {
+    this.otp = otp;
   }
 }

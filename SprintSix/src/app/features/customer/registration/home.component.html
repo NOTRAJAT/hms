@@ -1,15 +1,111 @@
-<section class="mx-auto max-w-4xl px-6 py-10">
-  <div class="app-card p-8">
-    <p class="text-xs font-semibold uppercase tracking-widest text-amber-800/70">Hotel Management System</p>
-    <h1 class="mt-3 text-4xl font-semibold">Welcome</h1>
-    <p class="mt-3 text-sm app-subtitle">
-      Start your account setup to access reservations and personalized services.
-    </p>
+<section class="mx-auto max-w-[90rem] px-4 py-10 md:px-6 md:py-14">
+  <div class="app-card app-hero-card app-animate-enter p-8 md:p-12">
+    <div class="grid items-center gap-8 md:grid-cols-[0.9fr_1.4fr]">
+      <div class="min-w-0">
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--ink-muted)]">Renaissance Stay</p>
+        <h1 class="mt-4 text-2xl font-semibold leading-tight md:text-3xl">"Where Every Stay Becomes a Signature Experience."</h1>
+        <p class="mt-4 max-w-xl text-sm leading-6 app-subtitle">
+          Register once to unlock seamless reservations, instant booking confirmations, secure payments, and personalized support.
+        </p>
+        <div class="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
+          <a routerLink="/register" class="app-button w-full sm:w-auto">Customer Registration</a>
+          <a routerLink="/login" class="app-button-outline w-full sm:w-auto">Customer Login</a>
+        </div>
+      </div>
 
-    <div class="mt-6 flex flex-wrap gap-3">
-      <a routerLink="/register" class="app-button">
-        Customer Registration
-      </a>
+      <div class="app-card min-w-0 overflow-hidden bg-white/75 p-6 md:p-7">
+        <div class="mt-4 app-room-slider">
+          <div class="app-room-track">
+            <a routerLink="/search" [queryParams]="{ roomType: 'Standard' }" class="app-room-review">
+              <img src="/assets/Standard.png" alt="Standard room" class="app-room-review-img" />
+              <div class="app-room-review-body">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold">Standard</p>
+                  <span class="app-badge">4.6 ★</span>
+                </div>
+                <p class="mt-2 text-xs app-subtitle">"Clean, comfortable and quick check-in. Great value stay."</p>
+              </div>
+            </a>
+
+            <a routerLink="/search" [queryParams]="{ roomType: 'Deluxe' }" class="app-room-review">
+              <img src="/assets/Deluxe.png" alt="Deluxe room" class="app-room-review-img" />
+              <div class="app-room-review-body">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold">Deluxe</p>
+                  <span class="app-badge">4.8 ★</span>
+                </div>
+                <p class="mt-2 text-xs app-subtitle">"Spacious and elegant. Perfect for work and weekend travel."</p>
+              </div>
+            </a>
+
+            <a routerLink="/search" [queryParams]="{ roomType: 'Suite' }" class="app-room-review">
+              <img src="/assets/Suite.png" alt="Suite room" class="app-room-review-img" />
+              <div class="app-room-review-body">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold">Suite</p>
+                  <span class="app-badge">4.9 ★</span>
+                </div>
+                <p class="mt-2 text-xs app-subtitle">"Premium comfort and attentive service throughout our stay."</p>
+              </div>
+            </a>
+
+            <a routerLink="/search" [queryParams]="{ roomType: 'Supreme' }" class="app-room-review">
+              <img src="/assets/Supreme.png" alt="Supreme room" class="app-room-review-img" />
+              <div class="app-room-review-body">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold">Supreme</p>
+                  <span class="app-badge">4.9 ★</span>
+                </div>
+                <p class="mt-2 text-xs app-subtitle">"Best in class ambience for celebration and long premium stays."</p>
+              </div>
+            </a>
+
+            <div class="app-room-review" aria-hidden="true">
+              <img src="/assets/Standard.png" alt="Standard room duplicate" class="app-room-review-img" />
+              <div class="app-room-review-body">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold">Standard</p>
+                  <span class="app-badge">4.6 ★</span>
+                </div>
+                <p class="mt-2 text-xs app-subtitle">"Clean, comfortable and quick check-in. Great value stay."</p>
+              </div>
+            </div>
+
+            <div class="app-room-review" aria-hidden="true">
+              <img src="/assets/Deluxe.png" alt="Deluxe room duplicate" class="app-room-review-img" />
+              <div class="app-room-review-body">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold">Deluxe</p>
+                  <span class="app-badge">4.8 ★</span>
+                </div>
+                <p class="mt-2 text-xs app-subtitle">"Spacious and elegant. Perfect for work and weekend travel."</p>
+              </div>
+            </div>
+
+            <div class="app-room-review" aria-hidden="true">
+              <img src="/assets/Suite.png" alt="Suite room duplicate" class="app-room-review-img" />
+              <div class="app-room-review-body">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold">Suite</p>
+                  <span class="app-badge">4.9 ★</span>
+                </div>
+                <p class="mt-2 text-xs app-subtitle">"Premium comfort and attentive service throughout our stay."</p>
+              </div>
+            </div>
+
+            <div class="app-room-review" aria-hidden="true">
+              <img src="/assets/Supreme.png" alt="Supreme room duplicate" class="app-room-review-img" />
+              <div class="app-room-review-body">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold">Supreme</p>
+                  <span class="app-badge">4.9 ★</span>
+                </div>
+                <p class="mt-2 text-xs app-subtitle">"Best in class ambience for celebration and long premium stays."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>

@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { NgFor, NgIf } from '@angular/common';
-import { Router } from '@angular/router';
+import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RoomService } from '../../../core/services/room.service';
-import { RoomSearchResult } from '../../../core/models/booking.model';
+import { BookingResponse, RoomSearchResult } from '../../../core/models/booking.model';
+import { BookingApiService } from '../../../core/services/booking-api.service';
+import { AuthSessionService } from '../../../core/services/auth-session.service';
 
 interface RoomGroup {
   roomType: string;
@@ -22,7 +24,7 @@ interface RoomGroup {
 @Component({
   selector: 'app-search-availability',
   standalone: true,
-  imports: [ReactiveFormsModule, NgIf, NgFor],
+  imports: [ReactiveFormsModule, NgIf, NgFor, DatePipe],
   templateUrl: './search-availability.component.html'
 })
 export class SearchAvailabilityComponent implements OnInit {
@@ -58,13 +60,18 @@ export class SearchAvailabilityComponent implements OnInit {
   });
 
   results: RoomSearchResult[] = [];
+  userBookings: BookingResponse[] = [];
+  overlappingUserBookings: BookingResponse[] = [];
   searched = false;
   isSearching = false;
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private roomService: RoomService
+    private route: ActivatedRoute,
+    private roomService: RoomService,
+    private bookingApi: BookingApiService,
+    private session: AuthSessionService
   ) {
     this.form = this.fb.group({
       checkIn: ['', [Validators.required, this.minTodayValidator.bind(this)]],
@@ -95,17 +102,30 @@ export class SearchAvailabilityComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe((params) => {
+      const requestedType = String(params.get('roomType') ?? '').trim();
+      if (requestedType) {
+        this.applyRoomTypeFromQuery(requestedType);
+      }
+    });
+
     this.roomService.roomTypes().subscribe({
       next: (types) => {
         const normalized = (types || [])
           .map((type) => String(type ?? '').trim())
           .filter((type) => !!type);
         this.roomTypes = Array.from(new Set([...this.fallbackRoomTypes, ...normalized]));
+        const requestedType = String(this.route.snapshot.queryParamMap.get('roomType') ?? '').trim();
+        if (requestedType) {
+          this.applyRoomTypeFromQuery(requestedType);
+        }
       },
       error: () => {
         this.roomTypes = [...this.fallbackRoomTypes];
       }
     });
+
+    this.loadUserBookings();
   }
 
   get minCheckout(): string {
@@ -123,6 +143,9 @@ export class SearchAvailabilityComponent implements OnInit {
     }
 
     this.searched = true;
+    this.overlappingUserBookings = [];
+    const selectedCheckIn = String(this.form.value.checkIn ?? '');
+    const selectedCheckOut = String(this.form.value.checkOut ?? '');
     const criteria = this.form.getRawValue() as {
       roomType: string | null;
       adults: number | null;
@@ -135,8 +158,8 @@ export class SearchAvailabilityComponent implements OnInit {
     };
     this.isSearching = true;
     this.roomService.search({
-      checkInDate: String(this.form.value.checkIn ?? ''),
-      checkOutDate: String(this.form.value.checkOut ?? ''),
+      checkInDate: selectedCheckIn,
+      checkOutDate: selectedCheckOut,
       adults: Number(this.form.value.adults ?? 1),
       children: Number(this.form.value.children ?? 0),
       roomType: String(criteria.roomType ?? '')
@@ -157,10 +180,12 @@ export class SearchAvailabilityComponent implements OnInit {
 
         filtered = this.sortRooms(filtered, String(criteria.sortBy));
         this.results = filtered;
+        this.refreshOverlappingUserBookings(selectedCheckIn, selectedCheckOut);
         this.isSearching = false;
       },
       error: () => {
         this.results = [];
+        this.overlappingUserBookings = [];
         this.isSearching = false;
       }
     });
@@ -244,6 +269,14 @@ export class SearchAvailabilityComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
+  private applyRoomTypeFromQuery(roomType: string): void {
+    const requested = roomType.toLowerCase();
+    const match = this.roomTypes.find((type) => type.toLowerCase() === requested);
+    if (match) {
+      this.form.get('roomType')?.setValue(match, { emitEvent: false });
+    }
+  }
+
   get groupedResults(): RoomGroup[] {
     const map = new Map<string, RoomGroup>();
     this.results.forEach((room) => {
@@ -273,5 +306,41 @@ export class SearchAvailabilityComponent implements OnInit {
       }
     });
     return Array.from(map.values());
+  }
+
+  private loadUserBookings(): void {
+    const userId = this.session.value?.userId;
+    if (!userId) {
+      this.userBookings = [];
+      return;
+    }
+    this.bookingApi.list(userId).subscribe({
+      next: (items) => {
+        this.userBookings = Array.isArray(items) ? items : [];
+      },
+      error: () => {
+        this.userBookings = [];
+      }
+    });
+  }
+
+  private refreshOverlappingUserBookings(checkIn: string, checkOut: string): void {
+    const start = this.toDate(checkIn);
+    const end = this.toDate(checkOut);
+    if (!start || !end) {
+      this.overlappingUserBookings = [];
+      return;
+    }
+    this.overlappingUserBookings = this.userBookings.filter((booking) => {
+      if (String(booking.status).toLowerCase() === 'cancelled') {
+        return false;
+      }
+      const bookingStart = this.toDate(String(booking.checkInDate).slice(0, 10));
+      const bookingEnd = this.toDate(String(booking.checkOutDate).slice(0, 10));
+      if (!bookingStart || !bookingEnd) {
+        return false;
+      }
+      return bookingStart < end && start < bookingEnd;
+    });
   }
 }

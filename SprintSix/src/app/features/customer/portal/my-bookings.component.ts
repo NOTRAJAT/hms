@@ -33,7 +33,7 @@ export class MyBookingsComponent implements OnInit {
 
   roomTypes: string[] = ['Standard', 'Deluxe', 'Suite', 'Supreme'];
 
-  private readonly hotelName = 'Hotel Management System';
+  private readonly hotelName = 'Renaissance Stay';
   private readonly hotelLocation = '12 Garden Lane, City Center';
 
   modifyForm = this.fb.group({

@@ -19,14 +19,14 @@ import {
   templateUrl: './customer-registration.component.html'
 })
 export class CustomerRegistrationComponent {
-  readonly countryCodes = ['+1', '+44', '+61', '+91', '+81'];
+  readonly countryCodes = ['+91'];
   isSubmitting = false;
   serverErrors: Record<string, string> = {};
 
   form = this.fb.group({
     name: ['', [Validators.required, nameValidator]],
     email: ['', [Validators.required, Validators.email]],
-    countryCode: ['', [Validators.required]],
+    countryCode: ['+91', [Validators.required]],
     mobileNumber: ['', [Validators.required, mobileValidator]],
     address: ['', [Validators.required, Validators.minLength(10)]],
     username: ['', [Validators.required, usernameValidator]],
@@ -80,7 +80,9 @@ export class CustomerRegistrationComponent {
   }
 
   reset(): void {
-    this.form.reset();
+    this.form.reset({
+      countryCode: '+91'
+    });
     this.serverErrors = {};
   }
 

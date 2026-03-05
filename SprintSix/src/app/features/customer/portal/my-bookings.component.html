@@ -1,12 +1,12 @@
-<section class="mx-auto max-w-6xl px-6 py-10">
-  <div class="app-card p-8">
-    <h1 class="text-3xl font-semibold">Booking History</h1>
-    <p class="mt-2 text-sm app-subtitle">View upcoming and past reservations for your account.</p>
+<section class="mx-auto max-w-6xl px-6 py-10 md:py-14">
+  <div class="app-card app-animate-enter p-8">
+    <h1 class="app-section-title">Booking History</h1>
+    <p class="mt-2 text-sm app-subtitle">Track upcoming and past reservations with clear status, refund, and invoice actions.</p>
     <p *ngIf="errorMessage" class="mt-3 text-sm text-rose-600">{{ errorMessage }}</p>
     <p *ngIf="successMessage" class="mt-3 text-sm text-emerald-700">{{ successMessage }}</p>
 
     <div *ngIf="cancelDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-      <div class="w-full max-w-md rounded-xl border border-[var(--border)] bg-white p-5 shadow-xl">
+      <div class="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xl">
         <h3 class="text-lg font-semibold">Confirm Cancellation</h3>
         <p class="mt-2 text-sm app-subtitle">{{ cancelDialog.message }}</p>
         <p class="mt-3 text-sm font-semibold">
@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <div *ngIf="modifyingBooking" class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5" [formGroup]="modifyForm">
+    <div *ngIf="modifyingBooking" class="mt-6 rounded-xl border border-amber-200 bg-[var(--warn-bg)] p-5" [formGroup]="modifyForm">
       <div class="flex items-center justify-between gap-3">
         <h2 class="text-lg font-semibold">Modify Booking #{{ modifyingBooking.bookingId }}</h2>
         <button class="app-button-outline px-3 py-1.5 text-xs" (click)="closeModify()">Close</button>
@@ -106,7 +106,7 @@
         <h2 class="text-xl font-semibold">Upcoming Bookings</h2>
         <p class="mt-1 text-xs app-subtitle">Future and active stays.</p>
         <div class="mt-4 space-y-4" *ngIf="upcomingBookings.length > 0; else noUpcoming">
-          <div class="rounded-lg border border-[var(--border)] bg-white/70 p-4" *ngFor="let booking of upcomingBookings">
+          <div class="rounded-xl border border-[var(--border)] bg-white/80 p-4 transition-shadow duration-200 hover:shadow-lg" *ngFor="let booking of upcomingBookings">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p class="text-sm font-semibold">
@@ -191,7 +191,7 @@
         <h2 class="text-xl font-semibold">Past Bookings</h2>
         <p class="mt-1 text-xs app-subtitle">Completed stays and older reservations.</p>
         <div class="mt-4 space-y-4" *ngIf="pastBookings.length > 0; else noPast">
-          <div class="rounded-lg border border-[var(--border)] bg-white/70 p-4" *ngFor="let booking of pastBookings">
+          <div class="rounded-xl border border-[var(--border)] bg-white/80 p-4 transition-shadow duration-200 hover:shadow-lg" *ngFor="let booking of pastBookings">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p class="text-sm font-semibold">

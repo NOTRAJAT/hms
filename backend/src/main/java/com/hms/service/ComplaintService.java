@@ -4,6 +4,7 @@ import com.hms.api.ApiException;
 import com.hms.api.dto.ComplaintRequest;
 import com.hms.api.dto.ComplaintResponse;
 import com.hms.api.dto.ComplaintCheckpointResponse;
+import com.hms.domain.Booking;
 import com.hms.domain.Complaint;
 import com.hms.repo.CustomerRepository;
 import com.hms.repo.ComplaintActionLogRepository;
@@ -11,6 +12,7 @@ import com.hms.repo.BookingRepository;
 import com.hms.repo.ComplaintRepository;
 import com.hms.repo.StaffRepository;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -150,12 +152,15 @@ public class ComplaintService {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Please provide more details to help us resolve your issue.");
     }
 
-    boolean bookingBelongsToUser = bookingRepository.findByBookingIdAndCustomerUserId(
+    Booking booking = bookingRepository.findByBookingIdAndCustomerUserId(
         request.getBookingId().trim(),
         request.getUserId().trim()
-    ).isPresent();
-    if (!bookingBelongsToUser) {
+    ).orElse(null);
+    if (booking == null) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Booking ID must belong to the logged-in customer.");
+    }
+    if (LocalDate.now().isBefore(booking.getCheckInDate())) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Complaint can be registered only on or after check-in date.");
     }
 
     String category = request.getCategory().trim();

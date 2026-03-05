@@ -2,6 +2,7 @@ package com.hms.api.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 public class AdminUserCreateRequest {
   @NotBlank
@@ -15,6 +16,7 @@ public class AdminUserCreateRequest {
   private String email;
 
   @NotBlank
+  @Pattern(regexp = "^\\+91[789]\\d{9}$")
   private String mobile;
 
   private String name;

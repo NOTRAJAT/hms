@@ -1,32 +1,27 @@
-<section class="mx-auto max-w-xl px-6 py-10">
-  <div class="app-card p-8">
-    <p class="text-xs font-semibold uppercase tracking-widest text-amber-800/70">Admin / Staff Access</p>
-    <h1 class="mt-2 text-3xl font-semibold">Admin / Staff Login</h1>
-    <p class="mt-2 text-sm app-subtitle">Use admin or staff credentials to access management tools.</p>
+<section class="mx-auto max-w-xl px-6 py-10 md:py-14">
+  <div class="app-card app-hero-card app-animate-enter p-8 md:p-10">
+    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-muted)]">Management Access</p>
+    <h1 class="mt-3 text-4xl font-semibold md:text-5xl">Admin / Staff</h1>
+    <p class="mt-3 text-sm leading-6 app-subtitle">Sign in to access the management workspace.</p>
 
     <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
       <div>
-        <label class="text-sm font-medium">Username</label>
-        <input type="text" class="mt-1 w-full rounded-xl border border-stone-300 px-4 py-2" formControlName="username" />
+        <label class="app-label">Username</label>
+        <input type="text" class="mt-1 app-input" formControlName="username" />
       </div>
 
       <div>
-        <label class="text-sm font-medium">Password</label>
-        <input type="password" class="mt-1 w-full rounded-xl border border-stone-300 px-4 py-2" formControlName="password" />
+        <label class="app-label">Password</label>
+        <input type="password" class="mt-1 app-input" formControlName="password" />
       </div>
 
-      <p class="text-sm text-rose-700" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <p class="rounded-lg border border-rose-200 bg-[var(--danger-bg)] px-3 py-2 text-sm text-rose-700" *ngIf="errorMessage">{{ errorMessage }}</p>
 
       <div class="flex flex-wrap items-center gap-3 pt-2">
-        <button type="submit" class="app-button px-5 py-2" [disabled]="isSubmitting">
+        <button type="submit" class="app-button px-5 py-2" [disabled]="isSubmitting || form.invalid">
           {{ isSubmitting ? 'Signing In...' : 'Sign In' }}
         </button>
-        <a
-          routerLink="/login"
-          class="inline-flex items-center justify-center rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
-        >
-          Customer Login
-        </a>
+        <a routerLink="/login" class="app-button-outline px-4 py-2">Customer Login</a>
       </div>
     </form>
   </div>

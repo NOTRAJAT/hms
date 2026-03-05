@@ -1,6 +1,147 @@
-<section class="mx-auto max-w-6xl px-6 py-10">
-  <div class="app-card p-8">
-    <h1 class="text-3xl font-semibold">Welcome, {{ session.value?.name }}!</h1>
-    <p class="mt-2 text-sm app-subtitle">Use the navigation menu to manage your bookings and profile.</p>
+<section class="mx-auto max-w-6xl space-y-6 px-6 py-10 md:py-14">
+  <div class="app-card app-hero-card app-animate-enter p-8 md:p-10">
+    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-muted)]">Guest Dashboard</p>
+    <h1 class="mt-3 text-4xl font-semibold md:text-5xl">Welcome, {{ session.value?.name }}!</h1>
+    <p class="mt-4 max-w-2xl text-sm leading-6 app-subtitle">
+      Plan your next stay, track reservations, manage support requests, and keep your profile updated from a single premium dashboard.
+    </p>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <a routerLink="/search" class="app-metric-card app-animate-stagger-1">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">Discovery</p>
+      <p class="mt-2 text-lg font-semibold">Search Rooms</p>
+      <p class="mt-1 text-sm app-subtitle">Find availability by dates, guests, and room type.</p>
+    </a>
+
+    <a routerLink="/bookings" class="app-metric-card app-animate-stagger-1">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">Reservations</p>
+      <p class="mt-2 text-lg font-semibold">My Bookings</p>
+      <p class="mt-1 text-sm app-subtitle">Review upcoming stays and download invoices.</p>
+    </a>
+
+    <a routerLink="/complaints" class="app-metric-card app-animate-stagger-2">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">Support</p>
+      <p class="mt-2 text-lg font-semibold">Register Complaint</p>
+      <p class="mt-1 text-sm app-subtitle">Raise issues and get checkpoint updates quickly.</p>
+    </a>
+
+    <a routerLink="/profile" class="app-metric-card app-animate-stagger-2">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">Account</p>
+      <p class="mt-2 text-lg font-semibold">Profile</p>
+      <p class="mt-1 text-sm app-subtitle">Update contact information and preferences.</p>
+    </a>
+  </div>
+
+  <div class="app-card p-6 md:p-8">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">Booking Snapshot</p>
+        <h2 class="mt-2 text-2xl font-semibold">Your Recent Reservations</h2>
+      </div>
+      <a routerLink="/bookings" class="app-button-outline px-4 py-2 text-xs">View All</a>
+    </div>
+
+    <p *ngIf="bookingError" class="mt-3 text-sm text-rose-700">{{ bookingError }}</p>
+    <p *ngIf="isLoadingBookings" class="mt-3 text-sm app-subtitle">Loading your bookings...</p>
+
+    <div *ngIf="!isLoadingBookings && hasBookings" class="mt-4 grid gap-3 sm:grid-cols-3">
+      <div class="rounded-xl border border-[var(--border)] bg-white/70 px-4 py-3">
+        <p class="text-xs uppercase tracking-[0.15em] text-[var(--ink-muted)]">Upcoming</p>
+        <p class="mt-1 text-2xl font-semibold">{{ upcomingCount }}</p>
+      </div>
+      <div class="rounded-xl border border-[var(--border)] bg-white/70 px-4 py-3">
+        <p class="text-xs uppercase tracking-[0.15em] text-[var(--ink-muted)]">Past</p>
+        <p class="mt-1 text-2xl font-semibold">{{ pastCount }}</p>
+      </div>
+      <div class="rounded-xl border border-[var(--border)] bg-white/70 px-4 py-3">
+        <p class="text-xs uppercase tracking-[0.15em] text-[var(--ink-muted)]">Cancelled</p>
+        <p class="mt-1 text-2xl font-semibold">{{ cancelledCount }}</p>
+      </div>
+    </div>
+
+    <div *ngIf="!isLoadingBookings && hasBookings" class="mt-4 space-y-3">
+      <div *ngFor="let booking of bookingSnapshot" class="rounded-xl border border-[var(--border)] bg-white/80 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-sm font-semibold">{{ booking.bookingId }} · {{ booking.roomType }}</p>
+          <span
+            class="app-badge"
+            [ngClass]="{
+              'bg-emerald-100 text-emerald-800': booking.status === 'Confirmed',
+              'bg-slate-200 text-slate-700': booking.status === 'Cancelled'
+            }"
+          >
+            {{ booking.status }}
+          </span>
+        </div>
+        <p class="mt-1 text-xs app-subtitle">
+          Stay: {{ booking.checkInDate | date: 'dd-MM-yyyy' }} to {{ booking.checkOutDate | date: 'dd-MM-yyyy' }} · INR {{ booking.totalAmount }}
+        </p>
+      </div>
+    </div>
+
+    <div *ngIf="!isLoadingBookings && !hasBookings && !bookingError" class="mt-4 rounded-xl border border-dashed border-[var(--border)] bg-white/70 p-4 text-sm app-subtitle">
+      No bookings yet. Start by searching room availability.
+    </div>
+  </div>
+
+  <div class="app-card p-6 md:p-8">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">Guest Picks</p>
+        <h2 class="mt-2 text-2xl font-semibold">Popular Room Types & Reviews</h2>
+        <p class="mt-1 text-sm app-subtitle">Tap any review card to open Search Availability with that room type preselected.</p>
+      </div>
+    </div>
+
+    <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <a
+        routerLink="/search"
+        [queryParams]="{ roomType: 'Standard' }"
+        class="app-card app-hover-lift overflow-hidden border border-[var(--border)] bg-white/85"
+      >
+        <img src="/assets/Standard.png" alt="Standard room" class="h-40 w-full object-cover" />
+        <div class="p-4">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-lg font-semibold">Standard</p>
+            <span class="app-badge">4.6 ★</span>
+          </div>
+          <p class="mt-2 text-sm app-subtitle">"Very clean room, quick check-in, and excellent value for short stays."</p>
+          <p class="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-muted)]">- Priya K.</p>
+        </div>
+      </a>
+
+      <a
+        routerLink="/search"
+        [queryParams]="{ roomType: 'Deluxe' }"
+        class="app-card app-hover-lift overflow-hidden border border-[var(--border)] bg-white/85"
+      >
+        <img src="/assets/Deluxe.png" alt="Deluxe room" class="h-40 w-full object-cover" />
+        <div class="p-4">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-lg font-semibold">Deluxe</p>
+            <span class="app-badge">4.8 ★</span>
+          </div>
+          <p class="mt-2 text-sm app-subtitle">"Spacious interiors and calm ambience. Great for business trips and weekends."</p>
+          <p class="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-muted)]">- Arjun M.</p>
+        </div>
+      </a>
+
+      <a
+        routerLink="/search"
+        [queryParams]="{ roomType: 'Suite' }"
+        class="app-card app-hover-lift overflow-hidden border border-[var(--border)] bg-white/85"
+      >
+        <img src="/assets/Suite.png" alt="Suite room" class="h-40 w-full object-cover" />
+        <div class="p-4">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-lg font-semibold">Suite</p>
+            <span class="app-badge">4.9 ★</span>
+          </div>
+          <p class="mt-2 text-sm app-subtitle">"Premium comfort and thoughtful service. Perfect for family celebrations."</p>
+          <p class="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ink-muted)]">- Neha S.</p>
+        </div>
+      </a>
+    </div>
   </div>
 </section>

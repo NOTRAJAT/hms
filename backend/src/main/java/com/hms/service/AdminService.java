@@ -76,7 +76,7 @@ public class AdminService {
   private static final Pattern AUTO_ROOM_CODE_PATTERN = Pattern.compile("^(ST|DL|SU|SP)(\\d{4})$");
   private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9._-]{5,30}$");
   private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
-  private static final Pattern MOBILE_PATTERN = Pattern.compile("^\\+?[0-9]{10,15}$");
+  private static final Pattern MOBILE_PATTERN = Pattern.compile("^\\+91[789]\\d{9}$");
   private static final SecureRandom RANDOM = new SecureRandom();
   private static final Map<String, String> ALLOWED_AMENITIES = new LinkedHashMap<>();
   static {
@@ -1121,7 +1121,7 @@ public class AdminService {
     booking.setCustomerUserId(customerUserId.isBlank() ? generateId("CUS") : customerUserId);
     booking.setCustomerName(request.getCustomerName().trim());
     booking.setCustomerEmail(request.getCustomerEmail().trim().toLowerCase(Locale.ROOT));
-    booking.setCustomerMobile(request.getCustomerMobile().trim());
+    booking.setCustomerMobile(normalizeMobile(request.getCustomerMobile()));
     booking.setRoomCode(room.getRoomCode());
     booking.setRoomType(room.getRoomType());
     booking.setOccupancyAdults(room.getOccupancyAdults());
@@ -2100,7 +2100,7 @@ public class AdminService {
   private String normalizeMobile(String mobile) {
     String value = mobile == null ? "" : mobile.trim();
     if (!MOBILE_PATTERN.matcher(value).matches()) {
-      throw new ApiException(HttpStatus.BAD_REQUEST, "Enter a valid phone number with country code.");
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Enter a valid +91 mobile number (10 digits, starts with 7, 8, or 9).");
     }
     return value;
   }

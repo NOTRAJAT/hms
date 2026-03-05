@@ -15,6 +15,10 @@ import { AdminService } from '../../core/services/admin.service';
   templateUrl: './admin-bookings.component.html'
 })
 export class AdminBookingsComponent implements OnInit {
+  readonly countryCodeOptions = ['+91'];
+  createMobileCountryCode = '+91';
+  createMobileNumber = '';
+
   bookings: AdminBookingItem[] = [];
   loading = false;
   errorMessage = '';
@@ -167,6 +171,8 @@ export class AdminBookingsComponent implements OnInit {
       depositAmount: 0,
       specialRequests: ''
     };
+    this.createMobileCountryCode = '+91';
+    this.createMobileNumber = '';
   }
 
   closeCreate(): void {
@@ -179,7 +185,11 @@ export class AdminBookingsComponent implements OnInit {
       return;
     }
     this.submittingCreate = true;
-    this.adminService.createBooking(this.createForm).subscribe({
+    const payload: AdminBookingCreatePayload = {
+      ...this.createForm,
+      customerMobile: this.composeMobile(this.createMobileCountryCode, this.createMobileNumber)
+    };
+    this.adminService.createBooking(payload).subscribe({
       next: (booking) => {
         this.successMessage = `You have successfully reserved the room. Reservation ID: ${booking.bookingId}`;
         this.submittingCreate = false;
@@ -303,12 +313,8 @@ export class AdminBookingsComponent implements OnInit {
   }
 
   sanitizeCreateMobile(): void {
-    let value = this.createForm.customerMobile || '';
-    value = value.replace(/[^0-9+]/g, '');
-    if (value.includes('+')) {
-      value = `+${value.replace(/\+/g, '')}`;
-    }
-    this.createForm.customerMobile = value;
+    this.createMobileNumber = this.createMobileNumber.replace(/\D/g, '').slice(0, 10);
+    this.createForm.customerMobile = this.composeMobile(this.createMobileCountryCode, this.createMobileNumber);
   }
 
   get searchTextInvalid(): boolean {
@@ -326,12 +332,6 @@ export class AdminBookingsComponent implements OnInit {
     }
     if (event.key >= '0' && event.key <= '9') {
       return;
-    }
-    if (event.key === '+') {
-      const value = this.createForm.customerMobile || '';
-      if (!value.includes('+') && (event.target as HTMLInputElement).selectionStart === 0) {
-        return;
-      }
     }
     event.preventDefault();
   }
@@ -376,7 +376,7 @@ export class AdminBookingsComponent implements OnInit {
   }
 
   get createMobileInvalid(): boolean {
-    return !/^\+?[0-9]{10,15}$/.test(this.createForm.customerMobile);
+    return this.createMobileCountryCode !== '+91' || !/^[789]\d{9}$/.test(this.createMobileNumber);
   }
 
   get isCreateFormValid(): boolean {
@@ -416,5 +416,9 @@ export class AdminBookingsComponent implements OnInit {
       && !this.editChildrenInvalid
       && !this.editGuestTotalInvalid
       && this.editForm.roomCode.trim().length > 0;
+  }
+
+  private composeMobile(countryCode: string, mobileNumber: string): string {
+    return `${countryCode}${mobileNumber.trim()}`;
   }
 }
