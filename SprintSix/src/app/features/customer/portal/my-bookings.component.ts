@@ -11,6 +11,8 @@ import { InvoiceService } from '../../../core/services/invoice.service';
 import { AuthSessionService } from '../../../core/services/auth-session.service';
 import { BookingApiService } from '../../../core/services/booking-api.service';
 import { RoomService } from '../../../core/services/room.service';
+import { ServiceRequestApiService } from '../../../core/services/service-request-api.service';
+import { ServiceTransaction } from '../../../core/models/service.model';
 
 @Component({
   selector: 'app-my-bookings',
@@ -30,6 +32,7 @@ export class MyBookingsComponent implements OnInit {
   modificationPreview: ModifyBookingPreviewResponse | null = null;
   modificationError = '';
   availabilityMessage = '';
+  serviceTransactionsByBooking: Record<string, ServiceTransaction[]> = {};
 
   roomTypes: string[] = ['Standard', 'Deluxe', 'Suite', 'Supreme'];
 
@@ -50,6 +53,7 @@ export class MyBookingsComponent implements OnInit {
     public session: AuthSessionService,
     private fb: FormBuilder,
     private roomService: RoomService,
+    private serviceApi: ServiceRequestApiService,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -385,13 +389,44 @@ export class MyBookingsComponent implements OnInit {
         this.bookings = items;
         this.selectedBookingId = '';
         this.errorMessage = '';
+        this.loadServiceTransactions();
       },
       error: () => {
         this.bookings = [];
         this.selectedBookingId = '';
         this.errorMessage = 'Unable to load bookings right now.';
+        this.serviceTransactionsByBooking = {};
       }
     });
+  }
+
+  private loadServiceTransactions(): void {
+    this.serviceApi.my().subscribe({
+      next: (items) => {
+        const grouped: Record<string, ServiceTransaction[]> = {};
+        (items || []).forEach((item) => {
+          const key = String(item.bookingId ?? '');
+          if (!key) {
+            return;
+          }
+          if (!grouped[key]) {
+            grouped[key] = [];
+          }
+          grouped[key].push(item);
+        });
+        Object.values(grouped).forEach((list) => {
+          list.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+        });
+        this.serviceTransactionsByBooking = grouped;
+      },
+      error: () => {
+        this.serviceTransactionsByBooking = {};
+      }
+    });
+  }
+
+  serviceTransactions(bookingId: string): ServiceTransaction[] {
+    return this.serviceTransactionsByBooking[bookingId] ?? [];
   }
 
   private buildModifyPayload(): ModifyBookingPayload | null {

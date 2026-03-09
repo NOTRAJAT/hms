@@ -25,7 +25,13 @@ public class ApiExceptionHandler {
       Map.entry("bookingId", "Please fill in all required fields."),
       Map.entry("title", "Please provide more details to help us resolve your issue."),
       Map.entry("description", "Please provide more details to help us resolve your issue."),
-      Map.entry("contactPreference", "Please fill in all required fields.")
+      Map.entry("contactPreference", "Please fill in all required fields."),
+      Map.entry("destination", "Please select a valid destination."),
+      Map.entry("packageCode", "Please select a valid salon package."),
+      Map.entry("pickupDateTime", "Please select a valid pickup date and time."),
+      Map.entry("slotDateTime", "Please select a valid slot date and time."),
+      Map.entry("deliveryDateTime", "Please select a valid delivery date and time."),
+      Map.entry("items", "Please select at least one valid dining item.")
   );
 
   @ExceptionHandler(ApiException.class)

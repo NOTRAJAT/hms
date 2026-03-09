@@ -32,7 +32,10 @@ import {
   AdminComplaintItem,
   AdminComplaintPageResponse,
   AdminComplaintQuery,
-  AdminComplaintUpdatePayload
+  AdminComplaintUpdatePayload,
+  AdminServiceItem,
+  AdminServicePageResponse,
+  AdminServiceQuery
 } from '../models/admin.model';
 import { AppConfigService } from './app-config.service';
 import { CustomerService } from './customer.service';
@@ -282,6 +285,27 @@ export class AdminService {
         pageSize
       }
     });
+  }
+
+  services(query: AdminServiceQuery = {}): Observable<AdminServicePageResponse> {
+    const params: Record<string, string> = {};
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && String(value).trim() !== '') {
+        params[key] = String(value);
+      }
+    });
+    return this.http.get<AdminServicePageResponse>(`${this.baseUrl}/services`, { params });
+  }
+
+  updateServiceStatus(
+    requestId: string,
+    status: 'Requested' | 'Confirmed' | 'Completed' | 'Cancelled'
+  ): Observable<AdminServiceItem> {
+    return this.withCsrf((headerName, token) =>
+      this.http.patch<AdminServiceItem>(`${this.baseUrl}/services/${encodeURIComponent(requestId)}/status`, { status }, {
+        headers: { [headerName]: token }
+      })
+    );
   }
 
   private withCsrf<T>(next: (headerName: string, token: string) => Observable<T>): Observable<T> {

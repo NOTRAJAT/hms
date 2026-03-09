@@ -1052,6 +1052,7 @@ public class AdminService {
     record.setBillId(generateId("BILL"));
     record.setCustomerUserId(customer.getUserId());
     record.setCustomerName(customer.getName());
+    record.setBookingId("");
     record.setRoomCharges(request.getRoomCharges());
     record.setServiceCharges(serviceCharges);
     record.setAdditionalFees(request.getAdditionalFees());
@@ -1364,7 +1365,7 @@ public class AdminService {
   private AdminBillResponse toAdminBillResponse(BillingRecord record) {
     return new AdminBillResponse(
         record.getBillId(),
-        "",
+        record.getBookingId() == null ? "" : record.getBookingId(),
         record.getCustomerUserId(),
         record.getCustomerName(),
         record.getIssueDate(),

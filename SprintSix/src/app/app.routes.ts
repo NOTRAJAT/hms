@@ -14,6 +14,9 @@ import { ComplaintsComponent } from './features/customer/portal/complaints.compo
 import { ProfileComponent } from './features/customer/portal/profile.component';
 import { BookingConfirmationComponent } from './features/customer/portal/booking-confirmation.component';
 import { PaymentComponent } from './features/customer/portal/payment.component';
+import { CabServiceComponent } from './features/customer/portal/cab-service.component';
+import { SalonServiceComponent } from './features/customer/portal/salon-service.component';
+import { DiningServiceComponent } from './features/customer/portal/dining-service.component';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { adminOrStaffGuard } from './core/guards/admin-or-staff.guard';
@@ -25,6 +28,7 @@ import { AdminReportsComponent } from './features/admin/admin-reports.component'
 import { AdminBillsComponent } from './features/admin/admin-bills.component';
 import { AdminComplaintsComponent } from './features/admin/admin-complaints.component';
 import { AdminLoginComponent } from './features/admin/admin-login.component';
+import { AdminServicesComponent } from './features/admin/admin-services.component';
 
 export const routes: Routes = [
   {
@@ -43,6 +47,9 @@ export const routes: Routes = [
       { path: 'contact', component: ContactUsComponent, canActivate: [authGuard] },
       { path: 'complaints', component: ComplaintsComponent, canActivate: [authGuard] },
       { path: 'complaints/view', component: ComplaintsComponent, canActivate: [authGuard] },
+      { path: 'services/cab', component: CabServiceComponent, canActivate: [authGuard] },
+      { path: 'services/salon', component: SalonServiceComponent, canActivate: [authGuard] },
+      { path: 'services/dining', component: DiningServiceComponent, canActivate: [authGuard] },
       { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
       {
         path: 'booking',
@@ -58,7 +65,8 @@ export const routes: Routes = [
       { path: 'admin/bills', component: AdminBillsComponent, canActivate: [authGuard, adminGuard] },
       { path: 'admin/complaints', component: AdminComplaintsComponent, canActivate: [authGuard, adminOrStaffGuard] },
       { path: 'admin/users', component: AdminUsersComponent, canActivate: [authGuard, adminGuard] },
-      { path: 'admin/reports', component: AdminReportsComponent, canActivate: [authGuard, adminGuard] }
+      { path: 'admin/reports', component: AdminReportsComponent, canActivate: [authGuard, adminGuard] },
+      { path: 'admin/services', component: AdminServicesComponent, canActivate: [authGuard, adminGuard] }
     ]
   }
 ];

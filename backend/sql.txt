@@ -133,3 +133,37 @@ mysql -u me -p'TCS#123' hms < hms_checkpoint.sql
 
 
 mysqldump -u me -p'TCS#123' hms > hms_checkpoint_$(date +%Y%m%d_%H%M%S).sql
+
+-- Additive services module (Cab / Salon / Dining)
+CREATE TABLE IF NOT EXISTS service_requests (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  request_id VARCHAR(32) NOT NULL,
+  booking_id VARCHAR(32) NOT NULL,
+  customer_user_id VARCHAR(32) NOT NULL,
+  customer_name VARCHAR(255) NOT NULL,
+  service_type VARCHAR(20) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  amount INT NOT NULL,
+  payment_status VARCHAR(20) NOT NULL,
+  payment_method VARCHAR(64) NOT NULL,
+  transaction_id VARCHAR(32) NOT NULL,
+  service_date_time DATETIME NOT NULL,
+  service_summary VARCHAR(200) NOT NULL,
+  service_details VARCHAR(1000) NOT NULL,
+  details_json VARCHAR(5000) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_service_requests_request_id (request_id),
+  UNIQUE KEY uk_service_requests_transaction_id (transaction_id),
+  KEY idx_service_requests_user (customer_user_id),
+  KEY idx_service_requests_booking (booking_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE billing_records ADD COLUMN IF NOT EXISTS booking_id VARCHAR(32) NULL;
+
+-- Service reset checkpoint for test runs
+-- START TRANSACTION;
+-- TRUNCATE TABLE service_requests;
+-- DELETE FROM billing_records WHERE bill_id LIKE 'BIL-%' AND room_charges = 0;
+-- COMMIT;

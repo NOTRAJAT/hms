@@ -180,6 +180,24 @@
               <p>Tax Breakdown: GST INR {{ booking.gstAmount }}, Service Charge INR {{ booking.serviceChargeAmount }}</p>
               <p>Payment Method: {{ booking.paymentMethod }}</p>
             </div>
+
+            <div class="mt-4 rounded-lg border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-sm">
+              <p class="font-semibold">Service Transactions</p>
+              <div *ngIf="serviceTransactions(booking.bookingId).length > 0; else noUpcomingServices" class="mt-2 space-y-2">
+                <div *ngFor="let service of serviceTransactions(booking.bookingId)" class="rounded-md border border-[var(--border)] bg-white px-3 py-2">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="font-medium">{{ service.serviceType }} · {{ service.requestId }}</p>
+                    <span class="app-badge">{{ service.status }}</span>
+                  </div>
+                  <p class="mt-1 text-xs app-subtitle">{{ service.serviceSummary }}</p>
+                  <p class="text-xs app-subtitle">{{ service.serviceDetails }}</p>
+                  <p class="text-xs app-subtitle">Paid: INR {{ service.amount }} · {{ service.paymentStatus }}</p>
+                </div>
+              </div>
+              <ng-template #noUpcomingServices>
+                <p class="mt-2 text-xs app-subtitle">No service transactions linked to this booking yet.</p>
+              </ng-template>
+            </div>
           </div>
         </div>
         <ng-template #noUpcoming>
@@ -235,6 +253,24 @@
               <p>Occupancy Limit: {{ booking.occupancyAdults }} adults, {{ booking.occupancyChildren }} children</p>
               <p>Tax Breakdown: GST INR {{ booking.gstAmount }}, Service Charge INR {{ booking.serviceChargeAmount }}</p>
               <p>Payment Method: {{ booking.paymentMethod }}</p>
+            </div>
+
+            <div class="mt-4 rounded-lg border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-sm">
+              <p class="font-semibold">Service Transactions</p>
+              <div *ngIf="serviceTransactions(booking.bookingId).length > 0; else noPastServices" class="mt-2 space-y-2">
+                <div *ngFor="let service of serviceTransactions(booking.bookingId)" class="rounded-md border border-[var(--border)] bg-white px-3 py-2">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <p class="font-medium">{{ service.serviceType }} · {{ service.requestId }}</p>
+                    <span class="app-badge">{{ service.status }}</span>
+                  </div>
+                  <p class="mt-1 text-xs app-subtitle">{{ service.serviceSummary }}</p>
+                  <p class="text-xs app-subtitle">{{ service.serviceDetails }}</p>
+                  <p class="text-xs app-subtitle">Paid: INR {{ service.amount }} · {{ service.paymentStatus }}</p>
+                </div>
+              </div>
+              <ng-template #noPastServices>
+                <p class="mt-2 text-xs app-subtitle">No service transactions linked to this booking yet.</p>
+              </ng-template>
             </div>
           </div>
         </div>

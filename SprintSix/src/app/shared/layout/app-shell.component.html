@@ -96,11 +96,23 @@
     <a routerLink="/admin/home" routerLinkActive="app-nav-link-active" class="app-nav-link">Home</a>
     <a routerLink="/admin/rooms" routerLinkActive="app-nav-link-active" class="app-nav-link">Room Management</a>
     <a routerLink="/admin/bookings" routerLinkActive="app-nav-link-active" class="app-nav-link">Booking Management</a>
+    <a routerLink="/admin/services" routerLinkActive="app-nav-link-active" class="app-nav-link">Service Management</a>
     <a routerLink="/admin/complaints" routerLinkActive="app-nav-link-active" class="app-nav-link">Complaint Dashboard</a>
-    <a routerLink="/admin/bills" routerLinkActive="app-nav-link-active" class="app-nav-link">Billing Management</a>
-    <a routerLink="/admin/users" routerLinkActive="app-nav-link-active" class="app-nav-link">User Management</a>
-    <a routerLink="/admin/reports" routerLinkActive="app-nav-link-active" class="app-nav-link">Reports & Analytics</a>
-    <a routerLink="/profile" routerLinkActive="app-nav-link-active" class="app-nav-link">Profile</a>
+    <a routerLink="/admin/bills" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">Billing Management</a>
+    <a routerLink="/admin/users" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">User Management</a>
+    <a routerLink="/admin/reports" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">Reports & Analytics</a>
+    <a routerLink="/profile" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">Profile</a>
+    <span class="relative hidden xl:inline-flex xl:items-center">
+      <button type="button" class="app-nav-link" (click)="toggleAdminMoreMenu()" aria-label="More admin navigation">
+        ☰ More
+      </button>
+      <div *ngIf="adminMoreMenuOpen" class="app-customer-more-menu">
+        <a routerLink="/admin/bills" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeAdminMoreMenu()">Billing Management</a>
+        <a routerLink="/admin/users" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeAdminMoreMenu()">User Management</a>
+        <a routerLink="/admin/reports" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeAdminMoreMenu()">Reports & Analytics</a>
+        <a routerLink="/profile" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeAdminMoreMenu()">Profile</a>
+      </div>
+    </span>
   </ng-container>
   <ng-template #nonAdminNav>
     <ng-container *ngIf="isStaff; else customerNav">
@@ -111,11 +123,27 @@
   <ng-template #customerNav>
     <a routerLink="/dashboard" routerLinkActive="app-nav-link-active" class="app-nav-link">Home</a>
     <a routerLink="/search" routerLinkActive="app-nav-link-active" class="app-nav-link">Search Availability</a>
+    <a routerLink="/services/cab" routerLinkActive="app-nav-link-active" class="app-nav-link">Cab</a>
     <a routerLink="/bookings" routerLinkActive="app-nav-link-active" class="app-nav-link">Booking History</a>
-    <a routerLink="/contact" routerLinkActive="app-nav-link-active" class="app-nav-link">Contact</a>
-    <a routerLink="/complaints" routerLinkActive="app-nav-link-active" class="app-nav-link">Register Complaint</a>
-    <a routerLink="/complaints/view" routerLinkActive="app-nav-link-active" class="app-nav-link">View Complaints</a>
-    <a routerLink="/profile" routerLinkActive="app-nav-link-active" class="app-nav-link">Profile</a>
+    <a routerLink="/services/salon" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">Salon</a>
+    <a routerLink="/services/dining" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">Dining</a>
+    <a routerLink="/contact" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">Contact</a>
+    <a routerLink="/complaints" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">Register Complaint</a>
+    <a routerLink="/complaints/view" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">View Complaints</a>
+    <a routerLink="/profile" routerLinkActive="app-nav-link-active" class="app-nav-link xl:hidden">Profile</a>
+    <span class="relative hidden xl:inline-flex xl:items-center">
+      <button type="button" class="app-nav-link" (click)="toggleCustomerMoreMenu()" aria-label="More navigation">
+        ☰ More
+      </button>
+      <div *ngIf="customerMoreMenuOpen" class="app-customer-more-menu">
+        <a routerLink="/services/salon" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeCustomerMoreMenu()">Salon</a>
+        <a routerLink="/services/dining" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeCustomerMoreMenu()">Dining</a>
+        <a routerLink="/contact" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeCustomerMoreMenu()">Contact</a>
+        <a routerLink="/complaints" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeCustomerMoreMenu()">Register Complaint</a>
+        <a routerLink="/complaints/view" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeCustomerMoreMenu()">View Complaints</a>
+        <a routerLink="/profile" routerLinkActive="app-nav-link-active" class="app-nav-link" (click)="closeCustomerMoreMenu()">Profile</a>
+      </div>
+    </span>
   </ng-template>
 </ng-template>
 

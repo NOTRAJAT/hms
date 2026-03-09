@@ -5,13 +5,14 @@ import { AdminService } from '../../core/services/admin.service';
 import { AdminDashboardSummary } from '../../core/models/admin.model';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { isPlatformBrowser } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 Chart.register(...registerables);
 
 @Component({
   selector: 'app-admin-home',
   standalone: true,
-  imports: [NgIf],
+  imports: [NgIf, RouterLink],
   templateUrl: './admin-home.component.html'
 })
 export class AdminHomeComponent implements OnInit, AfterViewInit, OnDestroy {

@@ -1,0 +1,139 @@
+<section class="mx-auto max-w-6xl px-6 py-10 md:py-14">
+  <div class="app-card app-hero-card p-8">
+    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--ink-muted)]">Renaissance Wellness</p>
+    <h1 class="mt-3 text-3xl font-semibold md:text-4xl">Salon Booking</h1>
+    <p class="mt-3 text-sm app-subtitle">Reserve premium grooming packages with guaranteed slot confirmation.</p>
+  </div>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+    <div class="app-card p-5">
+      <h2 class="text-lg font-semibold">Salon Packages</h2>
+      <div class="mt-4 space-y-3" *ngIf="packages.length > 0; else noPackages">
+        <div *ngFor="let option of packages" class="rounded-lg border border-[var(--border)] bg-white/80 px-3 py-2 text-sm">
+          <p class="font-medium">{{ option.packageName }}</p>
+          <p class="text-xs app-subtitle">{{ option.packageCode }} · {{ option.durationMinutes }} mins · INR {{ option.price }}</p>
+        </div>
+      </div>
+      <ng-template #noPackages>
+        <p class="mt-3 text-sm app-subtitle">No salon packages configured.</p>
+      </ng-template>
+
+      <div class="mt-5 rounded-lg border border-[var(--border)] bg-[var(--surface-soft)] p-3 text-xs app-subtitle">
+        Slot date and time must be within the selected booking stay window.
+      </div>
+    </div>
+
+    <div class="app-card p-6" [formGroup]="form">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-xl font-semibold">Salon Checkout</h2>
+        <span class="app-badge">{{ stage === 'otp' ? 'OTP Step' : 'Card Step' }}</span>
+      </div>
+
+      <p *ngIf="message" class="mt-3 text-sm"
+         [class.text-rose-700]="messageType === 'error'"
+         [class.text-amber-700]="messageType === 'warning'"
+         [class.text-emerald-700]="messageType === 'success'">
+        {{ message }}
+      </p>
+
+      <p *ngIf="loading" class="mt-4 text-sm app-subtitle">Loading bookings and service catalog...</p>
+
+      <div *ngIf="!loading" class="mt-4 grid gap-4 md:grid-cols-2">
+        <div class="md:col-span-2">
+          <label class="app-label">Linked Booking ID</label>
+          <select class="mt-1 app-select" formControlName="bookingId" (change)="onBookingChange()">
+            <option value="" disabled>Select booking</option>
+            <option *ngFor="let booking of eligibleBookings" [value]="booking.bookingId">
+              {{ booking.bookingId }} · {{ booking.roomType }} · {{ booking.checkInDate }} to {{ booking.checkOutDate }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-rose-700" *ngIf="form.get('bookingId')?.touched && form.get('bookingId')?.invalid">Booking selection is required.</p>
+        </div>
+
+        <div>
+          <label class="app-label">Package</label>
+          <select class="mt-1 app-select" formControlName="packageCode">
+            <option value="" disabled>Select package</option>
+            <option *ngFor="let option of packages" [value]="option.packageCode">
+              {{ option.packageName }} · INR {{ option.price }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-rose-700" *ngIf="form.get('packageCode')?.touched && form.get('packageCode')?.invalid">Package selection is required.</p>
+        </div>
+
+        <div>
+          <label class="app-label">Slot Date & Time</label>
+          <input class="mt-1 app-input" type="datetime-local" formControlName="slotDateTime" [min]="minDateTime" [max]="maxDateTime" />
+          <p class="mt-1 text-xs text-rose-700" *ngIf="form.get('slotDateTime')?.touched && form.get('slotDateTime')?.invalid">Slot date and time is required.</p>
+        </div>
+
+        <div>
+          <label class="app-label">Payment Method</label>
+          <select class="mt-1 app-select" formControlName="paymentMethod">
+            <option value="Card">Card</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="app-label">Cardholder Name</label>
+          <input class="mt-1 app-input" type="text" formControlName="cardholderName" placeholder="Name on card" />
+          <p class="mt-1 text-xs text-rose-700" *ngIf="form.get('cardholderName')?.touched && form.get('cardholderName')?.invalid">Enter 3-50 alphabetic characters.</p>
+        </div>
+
+        <div>
+          <label class="app-label">Card Number</label>
+          <input class="mt-1 app-input" type="text" inputmode="numeric" maxlength="16" formControlName="cardNumber" placeholder="16 digits" />
+          <p class="mt-1 text-xs text-rose-700" *ngIf="form.get('cardNumber')?.touched && form.get('cardNumber')?.invalid">Enter a valid 16-digit card number.</p>
+        </div>
+
+        <div>
+          <label class="app-label">Expiry (MM/YY)</label>
+          <input class="mt-1 app-input" type="text" inputmode="numeric" maxlength="5" formControlName="expiryDate" placeholder="MM/YY" (input)="formatExpiry()" />
+          <p class="mt-1 text-xs text-rose-700" *ngIf="form.get('expiryDate')?.touched && form.get('expiryDate')?.invalid">Card expiry date must be in the future.</p>
+        </div>
+
+        <div>
+          <label class="app-label">CVV</label>
+          <input class="mt-1 app-input" type="password" inputmode="numeric" maxlength="4" formControlName="cvv" placeholder="3 or 4 digits" />
+          <p class="mt-1 text-xs text-rose-700" *ngIf="form.get('cvv')?.touched && form.get('cvv')?.invalid">Invalid CVV. Please check again.</p>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="app-label">Billing Address (Optional)</label>
+          <input class="mt-1 app-input" type="text" formControlName="billingAddress" placeholder="Minimum 5 characters if entered" />
+          <p class="mt-1 text-xs text-rose-700" *ngIf="form.get('billingAddress')?.touched && form.get('billingAddress')?.invalid">Billing address must be at least 5 characters.</p>
+        </div>
+      </div>
+
+      <div *ngIf="stage === 'otp'" class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <p class="text-sm font-semibold text-amber-900">OTP Verification</p>
+        <p class="mt-1 text-xs text-amber-800">Use `123456` for success, `000000` for expired session, any other value for failed payment.</p>
+        <div class="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
+          <div>
+            <label class="app-label">One-Time Password</label>
+            <input class="mt-1 app-input" type="text" inputmode="numeric" maxlength="6" formControlName="otp" placeholder="Enter OTP" (input)="formatOtp()" />
+            <p class="mt-1 text-xs text-rose-700" *ngIf="form.get('otp')?.touched && form.get('otp')?.invalid">Enter a 6-digit OTP.</p>
+          </div>
+          <div class="flex items-end gap-2">
+            <button type="button" class="app-button-outline px-3 py-2 text-xs" (click)="setDemoOtp('123456')">Set Success OTP</button>
+            <button type="button" class="app-button-outline px-3 py-2 text-xs" (click)="setDemoOtp('000000')">Set Expired OTP</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap gap-2">
+        <button type="button" class="app-button-outline" *ngIf="stage === 'otp'" (click)="backToCard()" [disabled]="isMockLoading || submitting">Back</button>
+        <button type="button" class="app-button" (click)="stage === 'otp' ? submit() : proceedToOtp()" [disabled]="isMockLoading || submitting || loading">
+          {{ isMockLoading ? 'Processing...' : (stage === 'otp' ? 'Pay Now' : 'Proceed to OTP') }}
+        </button>
+      </div>
+
+      <div *ngIf="latestRequest" class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm">
+        <p class="font-semibold text-emerald-900">Service Booking Successful</p>
+        <p class="mt-1 text-emerald-800">Request ID: {{ latestRequest.requestId }}</p>
+        <p class="text-emerald-800">Linked Booking: {{ latestRequest.bookingId }}</p>
+        <p class="text-emerald-800">Amount Paid: INR {{ latestRequest.amount }}</p>
+      </div>
+    </div>
+  </div>
+</section>

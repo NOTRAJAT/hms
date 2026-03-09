@@ -29,6 +29,9 @@ public class BillingRecord {
   @Column(nullable = false)
   private String customerName;
 
+  @Column
+  private String bookingId;
+
   @Column(nullable = false)
   private int roomCharges;
 
@@ -89,6 +92,14 @@ public class BillingRecord {
 
   public void setCustomerName(String customerName) {
     this.customerName = customerName;
+  }
+
+  public String getBookingId() {
+    return bookingId;
+  }
+
+  public void setBookingId(String bookingId) {
+    this.bookingId = bookingId;
   }
 
   public int getRoomCharges() {
@@ -163,4 +174,3 @@ public class BillingRecord {
     this.issueDate = issueDate;
   }
 }
-

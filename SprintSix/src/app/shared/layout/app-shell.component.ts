@@ -12,6 +12,8 @@ import { AuthSessionService } from '../../core/services/auth-session.service';
 })
 export class AppShellComponent {
   mobileMenuOpen = false;
+  customerMoreMenuOpen = false;
+  adminMoreMenuOpen = false;
   readonly currentYear = new Date().getFullYear();
 
   constructor(
@@ -21,6 +23,8 @@ export class AppShellComponent {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.closeMobileMenu();
+        this.closeCustomerMoreMenu();
+        this.closeAdminMoreMenu();
       }
     });
   }
@@ -65,8 +69,32 @@ export class AppShellComponent {
     this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
+  toggleCustomerMoreMenu(): void {
+    this.customerMoreMenuOpen = !this.customerMoreMenuOpen;
+    if (this.customerMoreMenuOpen) {
+      this.adminMoreMenuOpen = false;
+    }
+  }
+
+  closeCustomerMoreMenu(): void {
+    this.customerMoreMenuOpen = false;
+  }
+
+  toggleAdminMoreMenu(): void {
+    this.adminMoreMenuOpen = !this.adminMoreMenuOpen;
+    if (this.adminMoreMenuOpen) {
+      this.customerMoreMenuOpen = false;
+    }
+  }
+
+  closeAdminMoreMenu(): void {
+    this.adminMoreMenuOpen = false;
+  }
+
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.closeMobileMenu();
+    this.closeCustomerMoreMenu();
+    this.closeAdminMoreMenu();
   }
 }

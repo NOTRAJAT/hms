@@ -355,3 +355,39 @@ export interface AdminRoomOccupancyGridResponse {
   dates: string[];
   rows: AdminRoomOccupancyGridRow[];
 }
+
+export interface AdminServiceItem {
+  requestId: string;
+  bookingId: string;
+  customerUserId: string;
+  customerName: string;
+  serviceType: 'Cab' | 'Salon' | 'Dining' | string;
+  status: 'Requested' | 'Confirmed' | 'Completed' | 'Cancelled' | string;
+  amount: number;
+  paymentStatus: 'PAID' | 'PENDING' | string;
+  paymentMethod: string;
+  transactionId: string;
+  serviceDateTime: string;
+  serviceSummary: string;
+  serviceDetails: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminServicePageResponse {
+  items: AdminServiceItem[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface AdminServiceQuery {
+  q?: string;
+  serviceType?: string;
+  status?: string;
+  bookingId?: string;
+  customer?: string;
+  page?: number;
+  size?: number;
+}

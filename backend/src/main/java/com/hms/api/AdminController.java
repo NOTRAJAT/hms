@@ -26,9 +26,13 @@ import com.hms.api.dto.AdminUserPageResponse;
 import com.hms.api.dto.AdminUserResponse;
 import com.hms.api.dto.AdminUserUpdateRequest;
 import com.hms.api.dto.AdminPasswordResetResponse;
+import com.hms.api.dto.AdminServiceItemResponse;
+import com.hms.api.dto.AdminServicePageResponse;
+import com.hms.api.dto.AdminServiceStatusUpdateRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import com.hms.service.AdminService;
+import com.hms.service.ServiceRequestService;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
@@ -50,9 +54,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/admin")
 public class AdminController {
   private final AdminService adminService;
+  private final ServiceRequestService serviceRequestService;
 
-  public AdminController(AdminService adminService) {
+  public AdminController(AdminService adminService, ServiceRequestService serviceRequestService) {
     this.adminService = adminService;
+    this.serviceRequestService = serviceRequestService;
   }
 
   @GetMapping("/dashboard-summary")
@@ -309,5 +315,26 @@ public class AdminController {
       @RequestParam(name = "pageSize", defaultValue = "2") int pageSize
   ) {
     return ResponseEntity.ok(adminService.roomOccupancyGrid(roomType, page, pageSize));
+  }
+
+  @GetMapping("/services")
+  public ResponseEntity<AdminServicePageResponse> services(
+      @RequestParam(name = "q", required = false) String q,
+      @RequestParam(name = "serviceType", required = false) String serviceType,
+      @RequestParam(name = "status", required = false) String status,
+      @RequestParam(name = "bookingId", required = false) String bookingId,
+      @RequestParam(name = "customer", required = false) String customer,
+      @RequestParam(name = "page", defaultValue = "0") int page,
+      @RequestParam(name = "size", defaultValue = "10") int size
+  ) {
+    return ResponseEntity.ok(serviceRequestService.searchAdmin(q, serviceType, status, bookingId, customer, page, size));
+  }
+
+  @PatchMapping("/services/{requestId}/status")
+  public ResponseEntity<AdminServiceItemResponse> updateServiceStatus(
+      @PathVariable String requestId,
+      @Valid @RequestBody AdminServiceStatusUpdateRequest request
+  ) {
+    return ResponseEntity.ok(serviceRequestService.updateStatus(requestId, request.getStatus()));
   }
 }
