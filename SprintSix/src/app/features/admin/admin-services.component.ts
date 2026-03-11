@@ -101,7 +101,9 @@ export class AdminServicesComponent implements OnInit {
     this.errorMessage = '';
     this.adminService.updateServiceStatus(item.requestId, target).subscribe({
       next: () => {
-        this.successMessage = `Request ${item.requestId} moved to ${target}.`;
+        this.successMessage = target === 'Cancelled'
+          ? `Request ${item.requestId} moved to Cancelled. Refund amount INR ${item.amount} initiated to bank and will be processed in 2 business days.`
+          : `Request ${item.requestId} moved to ${target}.`;
         this.updatingRequestId = '';
         this.load();
       },

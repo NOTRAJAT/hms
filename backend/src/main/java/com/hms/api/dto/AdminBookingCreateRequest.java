@@ -42,6 +42,7 @@ public class AdminBookingCreateRequest {
   private String roomType;
 
   @NotBlank
+  @Pattern(regexp = "^(?i)card$")
   private String paymentMethod;
 
   @Min(0)

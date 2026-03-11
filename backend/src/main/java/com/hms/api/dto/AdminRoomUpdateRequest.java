@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Max;
 
 public class AdminRoomUpdateRequest {
-  @NotBlank
+  // Optional in request, but immutable on server-side.
   private String roomType;
 
   @NotBlank

@@ -16,6 +16,7 @@ public class CabServiceCreateRequest {
   private LocalDateTime pickupDateTime;
 
   @NotBlank
+  @Pattern(regexp = "^(?i)card$")
   private String paymentMethod;
 
   @NotBlank

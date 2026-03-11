@@ -122,7 +122,7 @@ export class CabServiceComponent implements OnInit {
     setTimeout(() => {
       this.isMockLoading = false;
       this.stage = 'otp';
-      this.form.patchValue({ otp: '123456' });
+      this.form.patchValue({ otp: '' });
       this.form.get('otp')?.markAsUntouched();
     }, 1200);
   }
@@ -191,13 +191,6 @@ export class CabServiceComponent implements OnInit {
     if (onlyDigits !== control.value) {
       control.setValue(onlyDigits, { emitEvent: false });
     }
-  }
-
-  setDemoOtp(value: string): void {
-    if (this.submitting || this.isMockLoading) {
-      return;
-    }
-    this.form.patchValue({ otp: value });
   }
 
   private loadData(): void {

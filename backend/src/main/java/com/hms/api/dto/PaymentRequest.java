@@ -45,6 +45,7 @@ public class PaymentRequest {
   private Integer children;
 
   @NotBlank
+  @Pattern(regexp = "^(?i)card$")
   private String paymentMethod;
 
   private String specialRequests;

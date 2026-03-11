@@ -26,6 +26,7 @@ public class ApiExceptionHandler {
       Map.entry("title", "Please provide more details to help us resolve your issue."),
       Map.entry("description", "Please provide more details to help us resolve your issue."),
       Map.entry("contactPreference", "Please fill in all required fields."),
+      Map.entry("paymentMethod", "Only Card payment method is supported."),
       Map.entry("destination", "Please select a valid destination."),
       Map.entry("packageCode", "Please select a valid salon package."),
       Map.entry("pickupDateTime", "Please select a valid pickup date and time."),

@@ -15,7 +15,7 @@ export interface AdminRoomItem {
   maxOccupancy: number;
   amenitiesCsv: string;
   availabilityStatus: 'AVAILABLE' | 'NOT_AVAILABLE';
-  roomStatus: 'AVAILABLE' | 'OCCUPIED' | 'UNDER_MAINTENANCE';
+  roomStatus: 'AVAILABLE' | 'OCCUPIED' | 'UNDER_MAINTENANCE' | 'DEPRECATED';
   description: string;
   active: boolean;
 }
@@ -44,10 +44,9 @@ export interface AdminRoomQuery {
 }
 
 export interface AdminRoomUpdatePayload {
-  roomType: string;
   bedType: string;
   pricePerNight: number;
-  roomStatus: 'AVAILABLE' | 'OCCUPIED' | 'UNDER_MAINTENANCE';
+  roomStatus: 'AVAILABLE' | 'OCCUPIED' | 'UNDER_MAINTENANCE' | 'DEPRECATED';
   amenitiesCsv: string;
   occupancyAdults: number;
   occupancyChildren: number;
@@ -162,7 +161,7 @@ export interface AdminUserQuery {
 
 export interface AdminUserCreatePayload {
   username: string;
-  role: 'ADMIN' | 'CUSTOMER' | 'STAFF';
+  role: 'CUSTOMER' | 'STAFF';
   email: string;
   mobile: string;
   name?: string;

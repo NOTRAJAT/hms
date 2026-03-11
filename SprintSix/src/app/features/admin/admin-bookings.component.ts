@@ -60,7 +60,7 @@ export class AdminBookingsComponent implements OnInit {
     children: 0,
     roomType: 'Standard',
     roomCode: '',
-    paymentMethod: 'Credit Card',
+    paymentMethod: 'Card',
     depositAmount: 0,
     specialRequests: ''
   };
@@ -167,7 +167,7 @@ export class AdminBookingsComponent implements OnInit {
       children: 0,
       roomType: 'Standard',
       roomCode: '',
-      paymentMethod: 'Credit Card',
+      paymentMethod: 'Card',
       depositAmount: 0,
       specialRequests: ''
     };

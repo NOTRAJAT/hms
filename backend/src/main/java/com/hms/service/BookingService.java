@@ -4,14 +4,19 @@ import com.hms.api.ApiException;
 import com.hms.api.dto.BookingResponse;
 import com.hms.api.dto.CancellationPreviewResponse;
 import com.hms.api.dto.InvoiceResponse;
+import com.hms.api.dto.InvoiceServiceChargeDetail;
 import com.hms.api.dto.ModifyBookingConfirmRequest;
 import com.hms.api.dto.ModifyBookingPreviewResponse;
 import com.hms.api.dto.ModifyBookingRequest;
 import com.hms.api.dto.PaymentRequest;
 import com.hms.domain.Booking;
+import com.hms.domain.BillingRecord;
 import com.hms.domain.Room;
+import com.hms.domain.ServiceRequest;
+import com.hms.repo.BillingRecordRepository;
 import com.hms.repo.BookingRepository;
 import com.hms.repo.RoomRepository;
+import com.hms.repo.ServiceRequestRepository;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -36,10 +41,19 @@ public class BookingService {
 
   private final BookingRepository bookingRepository;
   private final RoomRepository roomRepository;
+  private final BillingRecordRepository billingRecordRepository;
+  private final ServiceRequestRepository serviceRequestRepository;
 
-  public BookingService(BookingRepository bookingRepository, RoomRepository roomRepository) {
+  public BookingService(
+      BookingRepository bookingRepository,
+      RoomRepository roomRepository,
+      BillingRecordRepository billingRecordRepository,
+      ServiceRequestRepository serviceRequestRepository
+  ) {
     this.bookingRepository = bookingRepository;
     this.roomRepository = roomRepository;
+    this.billingRecordRepository = billingRecordRepository;
+    this.serviceRequestRepository = serviceRequestRepository;
   }
 
   @Transactional
@@ -109,7 +123,7 @@ public class BookingService {
     booking.setGstAmount(gst);
     booking.setServiceChargeAmount(service);
     booking.setTotalAmount(total);
-    booking.setPaymentMethod(request.getPaymentMethod().trim());
+    booking.setPaymentMethod("Card");
     booking.setPaymentStatus("PAID");
     booking.setSpecialRequests(request.getSpecialRequests() == null ? "" : request.getSpecialRequests().trim());
     booking.setStatus(Booking.Status.Confirmed);
@@ -156,6 +170,42 @@ public class BookingService {
     if (booking.getStatus() != Booking.Status.Confirmed || !"PAID".equalsIgnoreCase(booking.getPaymentStatus())) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Invoice can only be generated for paid bookings.");
     }
+    List<BillingRecord> serviceBills = billingRecordRepository.findByBookingIdOrderByIssueDateDesc(booking.getBookingId());
+    int additionalServiceAmount = serviceBills.stream()
+        .filter(bill -> "PAID".equalsIgnoreCase(bill.getPaymentStatus()))
+        .mapToInt(BillingRecord::getTotalAmount)
+        .sum();
+    int additionalServiceCount = (int) serviceBills.stream()
+        .filter(bill -> "PAID".equalsIgnoreCase(bill.getPaymentStatus()))
+        .count();
+    List<ServiceRequest> serviceRequests = serviceRequestRepository
+        .findByCustomerUserIdAndBookingIdOrderByCreatedAtDesc(userId, booking.getBookingId());
+    int serviceRefundInitiatedAmount = serviceRequests.stream()
+        .filter(item -> item.getStatus() == ServiceRequest.Status.Cancelled)
+        .mapToInt(ServiceRequest::getAmount)
+        .sum();
+    List<InvoiceServiceChargeDetail> serviceChargeDetails = serviceRequests.stream()
+        .map(item -> {
+          int refund = item.getStatus() == ServiceRequest.Status.Cancelled ? item.getAmount() : 0;
+          String refundNote = refund > 0
+              ? String.format("Refund amount INR %d initiated to bank and will be processed in 2 business days.", refund)
+              : "";
+          return new InvoiceServiceChargeDetail(
+              item.getRequestId(),
+              item.getServiceType().name(),
+              item.getStatus().name(),
+              item.getAmount(),
+              item.getServiceDateTime().format(TIMESTAMP_FORMAT),
+              item.getServiceSummary(),
+              item.getServiceDetails(),
+              refund,
+              refundNote
+          );
+        })
+        .toList();
+    int grandTotalAmount = booking.getTotalAmount() + additionalServiceAmount;
+    int netPayableAmount = Math.max(booking.getTotalAmount(), grandTotalAmount - serviceRefundInitiatedAmount);
+
     return new InvoiceResponse(
         booking.getInvoiceId(),
         booking.getBookingId(),
@@ -175,6 +225,12 @@ public class BookingService {
         booking.getBasePrice(),
         booking.getGstAmount(),
         booking.getServiceChargeAmount(),
+        additionalServiceAmount,
+        additionalServiceCount,
+        serviceRefundInitiatedAmount,
+        netPayableAmount,
+        serviceChargeDetails,
+        grandTotalAmount,
         booking.getTotalAmount(),
         booking.getPaymentMethod(),
         LocalDateTime.ofInstant(booking.getCreatedAt(), ZoneId.systemDefault()).format(TIMESTAMP_FORMAT),
@@ -422,6 +478,10 @@ public class BookingService {
     }
     if (!room.getRoomType().equalsIgnoreCase(request.getRoomType())) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Selected room details are invalid.");
+    }
+    String paymentMethod = request.getPaymentMethod() == null ? "" : request.getPaymentMethod().trim();
+    if (!"card".equalsIgnoreCase(paymentMethod)) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "paymentMethod", "Only Card payment method is supported.");
     }
     String billingAddress = request.getBillingAddress();
     if (billingAddress != null && !billingAddress.isBlank() && billingAddress.trim().length() < 5) {

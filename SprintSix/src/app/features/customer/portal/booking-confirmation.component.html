@@ -8,141 +8,137 @@
       <div class="app-badge">Room ID: {{ room.roomId }}</div>
     </div>
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-3">
-      <div class="lg:col-span-2 space-y-5">
-        <div *ngIf="paymentMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" [class.border-rose-200]="paymentStatus === 'failure'" [class.bg-rose-50]="paymentStatus === 'failure'" [class.text-rose-700]="paymentStatus === 'failure'">
-          {{ paymentMessage }}
+    <div class="mt-6" *ngIf="hasSuccessfulPayment; else checkoutLayout">
+      <div class="app-card app-hero-card p-6">
+        <h2 class="text-lg font-semibold">Payment Receipt</h2>
+        <p class="mt-2 text-sm text-emerald-700">{{ paymentMessage }}</p>
+        <div class="mt-4 space-y-2 text-sm">
+          <p><span class="font-semibold">Booking ID:</span> {{ bookingId }}</p>
+          <p><span class="font-semibold">Transaction ID:</span> {{ transactionId }}</p>
+          <p><span class="font-semibold">Customer:</span> {{ session.value?.name }}</p>
+          <p><span class="font-semibold">Room:</span> {{ room.roomType }} ({{ room.roomId }})</p>
+          <p><span class="font-semibold">Amount Paid:</span> ₹{{ total }}</p>
+          <p><span class="font-semibold">Stay:</span> {{ room.checkIn }} to {{ room.checkOut }} ({{ nights }} nights)</p>
         </div>
-        <div *ngIf="paymentStatus === 'failure'" class="flex flex-wrap gap-3">
-          <button class="app-button" type="button" (click)="proceed()">Retry Payment</button>
-          <button class="app-button-outline" type="button" (click)="proceed()">Choose Different Payment Method</button>
-        </div>
-
-        <div class="rounded-2xl border border-[var(--border)] bg-white/80 p-5">
-          <h2 class="text-lg font-semibold">Stay Details</h2>
-          <div class="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <p class="app-label">Room Type</p>
-              <p class="text-sm font-semibold">{{ room.roomType }}</p>
-            </div>
-            <div>
-              <p class="app-label">Price per Night</p>
-              <p class="text-sm font-semibold">₹{{ room.price }}</p>
-            </div>
-            <div>
-              <p class="app-label">Check-in Date</p>
-              <p class="text-sm">{{ room.checkIn }}</p>
-            </div>
-            <div>
-              <p class="app-label">Check-out Date</p>
-              <p class="text-sm">{{ room.checkOut }}</p>
-            </div>
-            <div>
-              <p class="app-label">Total Nights</p>
-              <p class="text-sm">{{ nights }}</p>
-            </div>
-            <div>
-              <p class="app-label">Guests</p>
-              <p class="text-sm">{{ room.adults }} adults, {{ room.children }} children</p>
-            </div>
-          </div>
-          <p *ngIf="occupancyInvalid" class="mt-3 text-sm text-rose-600">
-            Selected guests exceed room occupancy limits ({{ room.occAdults }} adults, {{ room.occChildren }} children).
-          </p>
-        </div>
-
-        <div class="rounded-2xl border border-[var(--border)] bg-white/80 p-5">
-          <h2 class="text-lg font-semibold">Customer Details</h2>
-          <div class="mt-4 grid gap-4 sm:grid-cols-2" *ngIf="session.value as data">
-            <div>
-              <p class="app-label">Name</p>
-              <p class="text-sm">{{ data.name }}</p>
-            </div>
-            <div>
-              <p class="app-label">Email</p>
-              <p class="text-sm">{{ data.email }}</p>
-            </div>
-            <div>
-              <p class="app-label">Mobile</p>
-              <p class="text-sm">{{ data.mobile }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="rounded-2xl border border-[var(--border)] bg-white/80 p-5" [formGroup]="form">
-          <h2 class="text-lg font-semibold">Preferences & Payment</h2>
-          <div class="mt-4 grid gap-4">
-            <div>
-              <label class="app-label" for="specialRequests">Special Requests (Optional)</label>
-              <textarea
-                id="specialRequests"
-                rows="3"
-                formControlName="specialRequests"
-                class="mt-1 app-textarea"
-                placeholder="e.g., late check-in, extra pillow"
-              ></textarea>
-            </div>
-
-            <div>
-              <label class="app-label" for="paymentMethod">Payment Method</label>
-              <select id="paymentMethod" formControlName="paymentMethod" class="mt-1 app-select">
-                <option value="" disabled>Select</option>
-                <option value="credit">Credit Card</option>
-                <option value="debit">Debit Card</option>
-                <option value="upi">UPI</option>
-                <option value="wallet">Wallet</option>
-              </select>
-              <p *ngIf="form.get('paymentMethod')?.touched && form.get('paymentMethod')?.invalid" class="mt-1 text-xs text-rose-600">
-                Please select a payment method.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div class="app-card app-hero-card p-6">
-          <h2 class="text-lg font-semibold">Price Summary</h2>
-          <div class="mt-4 space-y-2 text-sm">
-            <div class="flex items-center justify-between">
-              <span>Subtotal</span>
-              <span>₹{{ subtotal }}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span>Taxes (12%)</span>
-              <span>₹{{ tax }}</span>
-            </div>
-            <div class="flex items-center justify-between text-base font-semibold">
-              <span>Total</span>
-              <span>₹{{ total }}</span>
-            </div>
-          </div>
-          <button
-            class="mt-6 w-full app-button"
-            [disabled]="form.invalid || occupancyInvalid || nights === 0"
-            (click)="proceed()"
-          >
-            Proceed to Pay
-          </button>
-          <p class="mt-3 text-xs app-subtitle">Next step opens secure payment flow with OTP validation.</p>
-        </div>
-
-        <div class="app-card p-6" *ngIf="paymentStatus === 'success'">
-          <h2 class="text-lg font-semibold">Receipt</h2>
-          <div class="mt-4 space-y-2 text-sm">
-            <p><span class="font-semibold">Booking ID:</span> {{ bookingId }}</p>
-            <p><span class="font-semibold">Transaction ID:</span> {{ transactionId }}</p>
-            <p><span class="font-semibold">Customer:</span> {{ session.value?.name }}</p>
-            <p><span class="font-semibold">Room:</span> {{ room.roomType }} ({{ room.roomId }})</p>
-            <p><span class="font-semibold">Amount Paid:</span> ₹{{ total }}</p>
-            <p><span class="font-semibold">Stay:</span> {{ room.checkIn }} to {{ room.checkOut }} ({{ nights }} nights)</p>
-          </div>
-          <button class="mt-4 app-button-outline" type="button" (click)="downloadInvoice()">
-            Download Invoice (PDF)
-          </button>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <button class="app-button-outline" type="button" (click)="downloadInvoice()">Download Invoice (PDF)</button>
+          <button class="app-button" type="button" (click)="goToMyBookings()">Go to My Bookings</button>
         </div>
       </div>
     </div>
+
+    <ng-template #checkoutLayout>
+      <div class="mt-6 grid gap-6 lg:grid-cols-3">
+        <div class="lg:col-span-2 space-y-5">
+          <div *ngIf="paymentMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" [class.border-rose-200]="paymentStatus === 'failure'" [class.bg-rose-50]="paymentStatus === 'failure'" [class.text-rose-700]="paymentStatus === 'failure'">
+            {{ paymentMessage }}
+          </div>
+          <div *ngIf="paymentStatus === 'failure'" class="flex flex-wrap gap-3">
+            <button class="app-button" type="button" (click)="proceed()">Retry Payment</button>
+          </div>
+
+          <div class="rounded-2xl border border-[var(--border)] bg-white/80 p-5">
+            <h2 class="text-lg font-semibold">Stay Details</h2>
+            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <p class="app-label">Room Type</p>
+                <p class="text-sm font-semibold">{{ room.roomType }}</p>
+              </div>
+              <div>
+                <p class="app-label">Price per Night</p>
+                <p class="text-sm font-semibold">₹{{ room.price }}</p>
+              </div>
+              <div>
+                <p class="app-label">Check-in Date</p>
+                <p class="text-sm">{{ room.checkIn }}</p>
+              </div>
+              <div>
+                <p class="app-label">Check-out Date</p>
+                <p class="text-sm">{{ room.checkOut }}</p>
+              </div>
+              <div>
+                <p class="app-label">Total Nights</p>
+                <p class="text-sm">{{ nights }}</p>
+              </div>
+              <div>
+                <p class="app-label">Guests</p>
+                <p class="text-sm">{{ room.adults }} adults, {{ room.children }} children</p>
+              </div>
+            </div>
+            <p *ngIf="occupancyInvalid" class="mt-3 text-sm text-rose-600">
+              Selected guests exceed room occupancy limits ({{ room.occAdults }} adults, {{ room.occChildren }} children).
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-[var(--border)] bg-white/80 p-5">
+            <h2 class="text-lg font-semibold">Customer Details</h2>
+            <div class="mt-4 grid gap-4 sm:grid-cols-2" *ngIf="session.value as data">
+              <div>
+                <p class="app-label">Name</p>
+                <p class="text-sm">{{ data.name }}</p>
+              </div>
+              <div>
+                <p class="app-label">Email</p>
+                <p class="text-sm">{{ data.email }}</p>
+              </div>
+              <div>
+                <p class="app-label">Mobile</p>
+                <p class="text-sm">{{ data.mobile }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-[var(--border)] bg-white/80 p-5" [formGroup]="form">
+            <h2 class="text-lg font-semibold">Preferences & Payment</h2>
+            <div class="mt-4 grid gap-4">
+              <div>
+                <label class="app-label" for="specialRequests">Special Requests (Optional)</label>
+                <textarea
+                  id="specialRequests"
+                  rows="3"
+                  formControlName="specialRequests"
+                  class="mt-1 app-textarea"
+                  placeholder="e.g., late check-in, extra pillow"
+                ></textarea>
+              </div>
+
+              <div>
+                <label class="app-label" for="paymentMethod">Payment Method</label>
+                <input id="paymentMethod" readonly formControlName="paymentMethod" class="mt-1 app-input bg-stone-100" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="app-card app-hero-card p-6">
+            <h2 class="text-lg font-semibold">Price Summary</h2>
+            <div class="mt-4 space-y-2 text-sm">
+              <div class="flex items-center justify-between">
+                <span>Subtotal</span>
+                <span>₹{{ subtotal }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Taxes (12%)</span>
+                <span>₹{{ tax }}</span>
+              </div>
+              <div class="flex items-center justify-between text-base font-semibold">
+                <span>Total</span>
+                <span>₹{{ total }}</span>
+              </div>
+            </div>
+            <button
+              class="mt-6 w-full app-button"
+              [disabled]="form.invalid || occupancyInvalid || nights === 0"
+              (click)="proceed()"
+            >
+              Proceed to Pay
+            </button>
+            <p class="mt-3 text-xs app-subtitle">Next step opens secure payment flow with OTP validation.</p>
+          </div>
+        </div>
+      </div>
+    </ng-template>
   </div>
 
   <ng-template #missing>

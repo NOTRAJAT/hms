@@ -208,6 +208,10 @@ export class AdminUsersComponent implements OnInit {
     if (!this.isEditValid || this.updating) {
       return;
     }
+    if (this.isAdminUser(this.selected) && !this.selected.locked && this.editForm.status === 'INACTIVE') {
+      this.errorMessage = 'Admin account cannot be deactivated.';
+      return;
+    }
     this.updating = true;
     const payload: AdminUserUpdatePayload = {
       ...this.editForm,
@@ -228,6 +232,10 @@ export class AdminUsersComponent implements OnInit {
   }
 
   promptStatusChange(user: AdminUserItem, status: 'ACTIVE' | 'INACTIVE'): void {
+    if (this.isAdminUser(user) && !user.locked && status === 'INACTIVE') {
+      this.errorMessage = 'Admin account cannot be deactivated.';
+      return;
+    }
     this.pendingStatusUser = user;
     this.pendingStatus = status;
   }
@@ -238,6 +246,11 @@ export class AdminUsersComponent implements OnInit {
 
   confirmStatusChange(): void {
     if (!this.pendingStatusUser || this.changingStatus) {
+      return;
+    }
+    if (this.isAdminUser(this.pendingStatusUser) && !this.pendingStatusUser.locked && this.pendingStatus === 'INACTIVE') {
+      this.errorMessage = 'Admin account cannot be deactivated.';
+      this.pendingStatusUser = null;
       return;
     }
     this.changingStatus = true;
@@ -258,6 +271,10 @@ export class AdminUsersComponent implements OnInit {
   }
 
   promptResetPassword(user: AdminUserItem): void {
+    if (this.isAdminUser(user)) {
+      this.errorMessage = 'Admin password reset is not allowed from user management.';
+      return;
+    }
     this.resetTarget = user;
     this.resetTempPassword = '';
   }
@@ -326,6 +343,10 @@ export class AdminUsersComponent implements OnInit {
 
   requiresDepartment(role: string): boolean {
     return role === 'STAFF';
+  }
+
+  isAdminUser(user: AdminUserItem | null | undefined): boolean {
+    return String(user?.role ?? '').toUpperCase() === 'ADMIN';
   }
 
   sanitizeMobile(field: 'create' | 'edit'): void {

@@ -172,8 +172,12 @@ export class ComplaintsComponent {
 
     if (this.form.invalid || !this.session.value?.userId) {
       this.form.markAllAsTouched();
+      const titleErrors = this.form.get('title')?.errors ?? {};
+      const descriptionErrors = this.form.get('description')?.errors ?? {};
       if (!this.form.value.category || !this.form.value.bookingId || !this.form.value.title || !this.form.value.description || !this.form.value.contactPreference) {
         this.errorMessage = 'Please fill in all required fields.';
+      } else if (titleErrors['maxlength'] || descriptionErrors['maxlength']) {
+        this.errorMessage = 'Title must be at most 100 characters and description at most 500 characters.';
       } else {
         this.errorMessage = 'Please provide more details to help us resolve your issue.';
       }

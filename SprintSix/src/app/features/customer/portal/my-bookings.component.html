@@ -192,6 +192,7 @@
                   <p class="mt-1 text-xs app-subtitle">{{ service.serviceSummary }}</p>
                   <p class="text-xs app-subtitle">{{ service.serviceDetails }}</p>
                   <p class="text-xs app-subtitle">Paid: INR {{ service.amount }} · {{ service.paymentStatus }}</p>
+                  <p class="text-xs text-amber-700" *ngIf="service.status === 'Cancelled'">Refund amount INR {{ service.amount }} initiated to bank and will be processed in 2 business days.</p>
                 </div>
               </div>
               <ng-template #noUpcomingServices>
@@ -266,6 +267,7 @@
                   <p class="mt-1 text-xs app-subtitle">{{ service.serviceSummary }}</p>
                   <p class="text-xs app-subtitle">{{ service.serviceDetails }}</p>
                   <p class="text-xs app-subtitle">Paid: INR {{ service.amount }} · {{ service.paymentStatus }}</p>
+                  <p class="text-xs text-amber-700" *ngIf="service.status === 'Cancelled'">Refund amount INR {{ service.amount }} initiated to bank and will be processed in 2 business days.</p>
                 </div>
               </div>
               <ng-template #noPastServices>

@@ -206,6 +206,12 @@ public class AdminService {
     Room room = roomRepository.findByRoomCode(roomCode)
         .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Room not found."));
 
+    if (request.getRoomType() != null
+        && !request.getRoomType().isBlank()
+        && !room.getRoomType().equalsIgnoreCase(request.getRoomType().trim())) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Room type is immutable and cannot be changed.");
+    }
+
     if ("OCCUPIED".equalsIgnoreCase(room.getRoomStatus())) {
       throw new ApiException(HttpStatus.CONFLICT, "Rooms marked as 'Occupied' cannot be updated.");
     }
@@ -233,14 +239,13 @@ public class AdminService {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Select at least one valid amenity.");
     }
 
-    room.setRoomType(request.getRoomType().trim());
     room.setBedType(request.getBedType().trim());
     room.setPricePerNight(request.getPricePerNight());
     room.setRoomStatus(normalizedStatus);
     room.setAmenitiesCsv(normalizedAmenities);
     room.setOccupancyAdults(request.getOccupancyAdults());
     room.setOccupancyChildren(request.getOccupancyChildren());
-    room.setActive(!"UNDER_MAINTENANCE".equals(normalizedStatus));
+    room.setActive(!"UNDER_MAINTENANCE".equals(normalizedStatus) && !"DEPRECATED".equals(normalizedStatus));
     roomRepository.save(room);
 
     return toAdminRoomResponse(room, availabilityForDate(room, LocalDate.now()));
@@ -1113,6 +1118,10 @@ public class AdminService {
     int gst = Math.round(basePrice * 0.10f);
     int service = Math.round(basePrice * 0.02f);
     int total = basePrice + gst + service;
+    String paymentMethod = request.getPaymentMethod() == null ? "" : request.getPaymentMethod().trim();
+    if (!"card".equalsIgnoreCase(paymentMethod)) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "paymentMethod", "Only Card payment method is supported.");
+    }
 
     Booking booking = new Booking();
     booking.setBookingId(generateId("BK"));
@@ -1138,7 +1147,7 @@ public class AdminService {
     booking.setGstAmount(gst);
     booking.setServiceChargeAmount(service);
     booking.setTotalAmount(total);
-    booking.setPaymentMethod(request.getPaymentMethod().trim());
+    booking.setPaymentMethod("Card");
     booking.setPaymentStatus("PENDING");
     booking.setSpecialRequests(request.getSpecialRequests() == null ? "" : request.getSpecialRequests().trim());
     booking.setStatus(Booking.Status.Confirmed);
@@ -1595,7 +1604,10 @@ public class AdminService {
     if ("CHECKPOINT_UPDATED".equals(actionType)) {
       return false;
     }
-    return supportChanged || !actionDetailsTrimmed.isBlank();
+    if (supportChanged) {
+      return true;
+    }
+    return startsWithCheckpointPrefix(actionDetailsTrimmed);
   }
 
   private String resolveCheckpointDetails(
@@ -1609,6 +1621,13 @@ public class AdminService {
           : "Checkpoint update: " + complaint.getSupportResponse().trim();
     }
     return "Checkpoint update: " + actionDetailsTrimmed;
+  }
+
+  private boolean startsWithCheckpointPrefix(String raw) {
+    if (raw == null || raw.isBlank()) {
+      return false;
+    }
+    return raw.trim().toLowerCase(Locale.ROOT).startsWith("checkpoint update:");
   }
 
   private int calculateServiceCharges(List<AdminBillServiceItem> serviceItems) {
@@ -1729,7 +1748,7 @@ public class AdminService {
     String username = normalizeUsername(request.getUsername());
     String email = normalizeEmail(request.getEmail());
     String mobile = normalizeMobile(request.getMobile());
-    String role = normalizeRole(request.getRole());
+    String role = normalizeCreatableRole(request.getRole());
     String name = request.getName() == null || request.getName().isBlank() ? username : request.getName().trim();
     String department = request.getDepartment() == null ? "" : request.getDepartment().trim();
 
@@ -1765,7 +1784,7 @@ public class AdminService {
       created = toAdminUserResponse(staff);
     } else {
       Customer customer = new Customer();
-      customer.setUserId(generateId(role.equals("ADMIN") ? "ADM" : "CUST"));
+      customer.setUserId(generateId("CUST"));
       customer.setName(name);
       customer.setUsername(username);
       customer.setEmail(email);
@@ -1774,7 +1793,7 @@ public class AdminService {
       customer.setPasswordHash(passwordEncoder.encode(tempPassword));
       customer.setFailedAttempts(0);
       customer.setLocked(false);
-      customer.setAdmin("ADMIN".equals(role));
+      customer.setAdmin(false);
       customer.setPasswordChangeRequired(true);
       customerRepository.save(customer);
       created = toAdminUserResponse(customer);
@@ -1797,8 +1816,12 @@ public class AdminService {
 
     Customer customer = customerRepository.findByUserId(userId).orElse(null);
     if (customer != null) {
-      if ("STAFF".equals(role)) {
-        throw new ApiException(HttpStatus.BAD_REQUEST, "Use STAFF role only for staff users.");
+      String currentRole = customer.isAdmin() ? "ADMIN" : "CUSTOMER";
+      if (!currentRole.equals(role)) {
+        throw new ApiException(HttpStatus.BAD_REQUEST, "Role is immutable. Create a new user for a different role.");
+      }
+      if (customer.isAdmin() && !customer.isLocked() && "INACTIVE".equals(status)) {
+        throw new ApiException(HttpStatus.BAD_REQUEST, "Admin account cannot be deactivated.");
       }
       if (customerRepository.existsByEmailAndUserIdNot(email, userId) || staffRepository.existsByEmail(email)) {
         throw new ApiException(HttpStatus.CONFLICT, "Email already exists.");
@@ -1807,7 +1830,6 @@ public class AdminService {
         throw new ApiException(HttpStatus.CONFLICT, "Mobile already exists.");
       }
 
-      customer.setAdmin("ADMIN".equals(role));
       customer.setEmail(email);
       customer.setMobile(mobile);
       customer.setLocked("INACTIVE".equals(status));
@@ -1821,7 +1843,7 @@ public class AdminService {
     Staff staff = staffRepository.findByUserId(userId)
         .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "User not found."));
     if (!"STAFF".equals(role)) {
-      throw new ApiException(HttpStatus.BAD_REQUEST, "Staff role cannot be changed.");
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Role is immutable. Create a new user for a different role.");
     }
     if (department.isBlank()) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Department is required for STAFF.");
@@ -1848,6 +1870,9 @@ public class AdminService {
     String normalized = normalizeStatus(status);
     Customer customer = customerRepository.findByUserId(userId).orElse(null);
     if (customer != null) {
+      if (customer.isAdmin() && !customer.isLocked() && "INACTIVE".equals(normalized)) {
+        throw new ApiException(HttpStatus.BAD_REQUEST, "Admin account cannot be deactivated.");
+      }
       customer.setLocked("INACTIVE".equals(normalized));
       if ("ACTIVE".equals(normalized)) {
         customer.setFailedAttempts(0);
@@ -1870,6 +1895,9 @@ public class AdminService {
     String tempPassword = generateTemporaryPassword();
     Customer customer = customerRepository.findByUserId(userId).orElse(null);
     if (customer != null) {
+      if (customer.isAdmin()) {
+        throw new ApiException(HttpStatus.BAD_REQUEST, "Admin password reset is not allowed from user management.");
+      }
       customer.setPasswordHash(passwordEncoder.encode(tempPassword));
       customer.setPasswordChangeRequired(true);
       customer.setFailedAttempts(0);
@@ -1972,13 +2000,15 @@ public class AdminService {
   private String normalizeRoomStatus(String value) {
     String status = value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
     return switch (status) {
-      case "AVAILABLE", "OCCUPIED", "UNDER_MAINTENANCE" -> status;
+      case "AVAILABLE", "OCCUPIED", "UNDER_MAINTENANCE", "DEPRECATED" -> status;
       default -> throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid room status.");
     };
   }
 
   private String availabilityForDate(Room room, LocalDate date) {
-    if (!room.isActive() || "UNDER_MAINTENANCE".equalsIgnoreCase(room.getRoomStatus())) {
+    if (!room.isActive()
+        || "UNDER_MAINTENANCE".equalsIgnoreCase(room.getRoomStatus())
+        || "DEPRECATED".equalsIgnoreCase(room.getRoomStatus())) {
       return "NOT_AVAILABLE";
     }
     boolean overlap = !bookingRepository.findByRoomCodeAndStatusAndCheckInDateLessThanAndCheckOutDateGreaterThan(
@@ -2112,6 +2142,14 @@ public class AdminService {
       case "ADMIN", "CUSTOMER", "STAFF" -> value;
       default -> throw new ApiException(HttpStatus.BAD_REQUEST, "Role must be ADMIN, CUSTOMER or STAFF.");
     };
+  }
+
+  private String normalizeCreatableRole(String role) {
+    String value = normalizeRole(role);
+    if ("ADMIN".equals(value)) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "Role must be CUSTOMER or STAFF for user creation.");
+    }
+    return value;
   }
 
   private String generateStaffId() {

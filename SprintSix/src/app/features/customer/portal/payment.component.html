@@ -145,11 +145,6 @@
         <p class="mt-2 text-xs app-subtitle">
           Demo OTPs: <span class="font-medium">123456</span> success, <span class="font-medium">000000</span> expired, any other OTP fails.
         </p>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <button type="button" class="app-button-outline px-3 py-1 text-xs" (click)="setDemoOtp('123456')">Use Success OTP</button>
-          <button type="button" class="app-button-outline px-3 py-1 text-xs" (click)="setDemoOtp('000000')">Use Expired OTP</button>
-          <button type="button" class="app-button-outline px-3 py-1 text-xs" (click)="setDemoOtp('111111')">Use Failed OTP</button>
-        </div>
       </div>
 
       <div *ngIf="isMockLoading" class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">

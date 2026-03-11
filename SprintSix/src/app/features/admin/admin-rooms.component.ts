@@ -32,7 +32,6 @@ export class AdminRoomsComponent implements OnInit {
 
   selected: AdminRoomItem | null = null;
   editForm: AdminRoomUpdatePayload = {
-    roomType: 'Standard',
     bedType: 'Queen',
     pricePerNight: 1,
     roomStatus: 'AVAILABLE',
@@ -46,6 +45,7 @@ export class AdminRoomsComponent implements OnInit {
   loading = false;
   showConfirmModal = false;
   updating = false;
+  editErrorMessage = '';
   selectedAmenities: string[] = [];
   addMode = false;
   addSubmitted = false;
@@ -146,11 +146,9 @@ export class AdminRoomsComponent implements OnInit {
 
   startEdit(room: AdminRoomItem): void {
     this.selected = room;
-    const normalizedRoomType = room.roomType || 'Standard';
     const normalizedBedType = room.bedType || 'Queen';
     const normalizedRoomStatus = room.roomStatus || 'AVAILABLE';
     this.editForm = {
-      roomType: normalizedRoomType,
       bedType: normalizedBedType,
       pricePerNight: room.pricePerNight,
       roomStatus: normalizedRoomStatus,
@@ -164,6 +162,7 @@ export class AdminRoomsComponent implements OnInit {
       .filter((value) => this.allowedAmenities.includes(value));
     this.successMessage = '';
     this.errorMessage = '';
+    this.editErrorMessage = '';
   }
 
   openAddRoom(): void {
@@ -285,6 +284,7 @@ export class AdminRoomsComponent implements OnInit {
   cancelEdit(): void {
     this.selected = null;
     this.showConfirmModal = false;
+    this.editErrorMessage = '';
   }
 
   saveEdit(): void {
@@ -292,9 +292,10 @@ export class AdminRoomsComponent implements OnInit {
       return;
     }
     if (!this.isEditFormValid) {
-      this.errorMessage = 'Please fix validation errors in edit form.';
+      this.editErrorMessage = 'Please fix validation errors in edit form.';
       return;
     }
+    this.editErrorMessage = '';
     this.showConfirmModal = true;
   }
 
@@ -307,12 +308,12 @@ export class AdminRoomsComponent implements OnInit {
       return;
     }
     if (!this.isEditFormValid) {
-      this.errorMessage = 'Please fix validation errors in edit form.';
+      this.editErrorMessage = 'Please fix validation errors in edit form.';
       this.showConfirmModal = false;
       return;
     }
     if (this.selectedAmenities.length === 0) {
-      this.errorMessage = 'Select at least one amenity.';
+      this.editErrorMessage = 'Select at least one amenity.';
       this.showConfirmModal = false;
       return;
     }
@@ -324,11 +325,12 @@ export class AdminRoomsComponent implements OnInit {
         this.updating = false;
         this.showConfirmModal = false;
         this.selected = null;
+        this.editErrorMessage = '';
         this.load();
       },
       error: (error) => {
         this.updating = false;
-        this.errorMessage = error?.error?.error ?? 'Unable to update room.';
+        this.editErrorMessage = error?.error?.error ?? 'Unable to update room.';
       }
     });
   }

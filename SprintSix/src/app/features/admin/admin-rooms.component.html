@@ -240,14 +240,13 @@
   <div class="app-card mt-6 p-6" *ngIf="selected as room">
     <h2 class="text-xl font-semibold">Edit Room {{ room.roomCode }}</h2>
     <p class="mt-1 text-xs text-stone-500">Room number is non-editable.</p>
+    <p class="mt-2 text-sm text-rose-700" *ngIf="editErrorMessage">{{ editErrorMessage }}</p>
 
     <div class="mt-4 grid gap-3 md:grid-cols-2">
-      <select [(ngModel)]="editForm.roomType" class="rounded-xl border border-stone-300 px-3 py-2 text-sm">
-        <option value="Standard">Standard</option>
-        <option value="Deluxe">Deluxe</option>
-        <option value="Suite">Suite</option>
-        <option value="Supreme">Supreme</option>
-      </select>
+      <div class="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm">
+        <p class="text-xs text-stone-500">Room Type (immutable)</p>
+        <p class="font-medium text-stone-900">{{ room.roomType }}</p>
+      </div>
       <select [(ngModel)]="editForm.bedType" class="rounded-xl border border-stone-300 px-3 py-2 text-sm">
         <option value="King">King</option>
         <option value="Queen">Queen</option>
@@ -267,6 +266,7 @@
         <option value="AVAILABLE">Available</option>
         <option value="OCCUPIED">Occupied</option>
         <option value="UNDER_MAINTENANCE">Under Maintenance</option>
+        <option value="DEPRECATED">Deprecated (No longer in service)</option>
       </select>
       <input
         [(ngModel)]="editForm.occupancyAdults"
@@ -318,10 +318,11 @@
     <div class="w-full max-w-xl rounded-2xl border border-stone-200 bg-[#fffdfa] p-6 shadow-2xl">
       <h3 class="text-xl font-semibold">Confirm Room Update</h3>
       <p class="mt-1 text-sm text-stone-600">Please review the room changes before finalizing.</p>
+      <p class="mt-2 text-sm text-rose-700" *ngIf="editErrorMessage">{{ editErrorMessage }}</p>
 
       <div class="mt-4 grid gap-2 rounded-xl border border-stone-200 bg-white/70 p-4 text-sm">
         <p><span class="font-semibold">Room Number:</span> {{ room.roomCode }}</p>
-        <p><span class="font-semibold">Room Type:</span> {{ editForm.roomType }}</p>
+        <p><span class="font-semibold">Room Type:</span> {{ room.roomType }} (immutable)</p>
         <p><span class="font-semibold">Bed Type:</span> {{ editForm.bedType }}</p>
         <p><span class="font-semibold">Price:</span> INR {{ editForm.pricePerNight }}</p>
         <p><span class="font-semibold">Room Status:</span> {{ editForm.roomStatus }}</p>

@@ -247,7 +247,13 @@ public class ComplaintService {
   }
 
   private String generateComplaintId() {
-    return String.format("CMP-%06d", RANDOM.nextInt(1_000_000));
+    for (int attempt = 0; attempt < 24; attempt += 1) {
+      String candidate = String.format("CMP-%06d", RANDOM.nextInt(1_000_000));
+      if (repository.findByComplaintId(candidate).isEmpty()) {
+        return candidate;
+      }
+    }
+    throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to generate complaint ID.");
   }
 
   private void logAcknowledgement(Complaint complaint) {

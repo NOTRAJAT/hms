@@ -9,5 +9,5 @@ public interface BillingRecordRepository extends JpaRepository<BillingRecord, Lo
   Optional<BillingRecord> findByBillId(String billId);
   boolean existsByBillId(String billId);
   List<BillingRecord> findAllByOrderByIssueDateDesc();
+  List<BillingRecord> findByBookingIdOrderByIssueDateDesc(String bookingId);
 }
-

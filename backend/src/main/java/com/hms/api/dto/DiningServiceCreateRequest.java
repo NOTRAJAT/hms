@@ -22,6 +22,7 @@ public class DiningServiceCreateRequest {
   private String specialInstructions;
 
   @NotBlank
+  @Pattern(regexp = "^(?i)card$")
   private String paymentMethod;
 
   @NotBlank

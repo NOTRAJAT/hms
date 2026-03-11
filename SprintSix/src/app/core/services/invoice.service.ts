@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { jsPDF } from 'jspdf';
-import { InvoiceResponse } from '../models/booking.model';
+import { InvoiceResponse, InvoiceServiceChargeDetail } from '../models/booking.model';
 
 @Injectable({ providedIn: 'root' })
 export class InvoiceService {
@@ -13,9 +13,35 @@ export class InvoiceService {
 
   downloadInvoice(record: InvoiceResponse): void {
     const doc = new jsPDF();
-    const line = (y: number, color: [number, number, number] = [210, 184, 144]) => {
+    const pageTop = 14;
+    const pageBottom = 285;
+    let y = 0;
+    const line = (lineY: number, color: [number, number, number] = [210, 184, 144]) => {
       doc.setDrawColor(...color);
-      doc.line(14, y, 196, y);
+      doc.line(14, lineY, 196, lineY);
+    };
+    const ensureSpace = (required: number) => {
+      if (y + required <= pageBottom) {
+        return;
+      }
+      doc.addPage();
+      y = pageTop;
+    };
+    const write = (text: string, fontSize = 10, style: 'normal' | 'bold' | 'italic' = 'normal', gap = 6) => {
+      ensureSpace(gap);
+      doc.setFont('times', style);
+      doc.setFontSize(fontSize);
+      doc.text(text, 14, y);
+      y += gap;
+    };
+    const writeWrapped = (text: string, fontSize = 10, style: 'normal' | 'bold' | 'italic' = 'normal', width = 178, gap = 5) => {
+      const lines = doc.splitTextToSize(text, width);
+      const required = Math.max(lines.length * gap + 1, gap);
+      ensureSpace(required);
+      doc.setFont('times', style);
+      doc.setFontSize(fontSize);
+      doc.text(lines, 14, y);
+      y += lines.length * gap + 1;
     };
     const printedAt = this.formatDateTime(record.invoiceDateTime);
     const hotelName = this.hotelName;
@@ -45,59 +71,96 @@ export class InvoiceService {
     doc.text(`${hotelEmail} | ${hotelPhone}`, 38, 37);
     doc.setTextColor(0, 0, 0);
     line(42);
+    y = 50;
 
-    doc.setFontSize(12);
-    doc.setFont('times', 'bold');
-    doc.text(`Invoice #: ${record.invoiceId}`, 14, 50);
-    doc.setFont('times', 'normal');
-    doc.text(`Booking ID: ${record.bookingId}`, 14, 56);
-    doc.text(`Transaction ID: ${record.transactionId}`, 14, 62);
-    doc.text(`Invoice Date: ${printedAt}`, 14, 68);
+    write(`Invoice #: ${record.invoiceId}`, 12, 'bold');
+    write(`Booking ID: ${record.bookingId}`);
+    write(`Transaction ID: ${record.transactionId}`);
+    write(`Invoice Date: ${printedAt}`);
 
-    line(72);
-    doc.setFontSize(11);
-    doc.setFont('times', 'bold');
-    doc.text('Customer Details', 14, 80);
-    doc.setFont('times', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Name: ${record.customerName}`, 14, 86);
-    doc.text(`Email: ${record.customerEmail}`, 14, 91);
-    doc.text(`Mobile: ${record.customerMobile}`, 14, 96);
+    y += 2;
+    line(y);
+    y += 8;
+    write('Customer Details', 11, 'bold');
+    write(`Name: ${record.customerName}`);
+    write(`Email: ${record.customerEmail}`);
+    write(`Mobile: ${record.customerMobile}`);
 
-    line(100);
-    doc.setFontSize(11);
-    doc.setFont('times', 'bold');
-    doc.text('Booking Details', 14, 108);
-    doc.setFont('times', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Room Type: ${record.roomType}`, 14, 114);
-    doc.text(`Occupancy Limit: ${record.occupancyAdults} adults, ${record.occupancyChildren} children`, 14, 119);
-    doc.text(`Price per Night: INR ${record.pricePerNight}`, 14, 124);
-    doc.text(`Check-in: ${record.checkInDate}`, 14, 129);
-    doc.text(`Check-out: ${record.checkOutDate}`, 14, 134);
-    doc.text(`Nights: ${record.nights}`, 14, 139);
-    doc.text(`Guests: ${record.adults} adults, ${record.children} children`, 14, 144);
+    y += 2;
+    line(y);
+    y += 8;
+    write('Booking Details', 11, 'bold');
+    write(`Room Type: ${record.roomType}`);
+    write(`Occupancy Limit: ${record.occupancyAdults} adults, ${record.occupancyChildren} children`);
+    write(`Price per Night: INR ${record.pricePerNight}`);
+    write(`Check-in: ${record.checkInDate}`);
+    write(`Check-out: ${record.checkOutDate}`);
+    write(`Nights: ${record.nights}`);
+    write(`Guests: ${record.adults} adults, ${record.children} children`);
 
-    line(148);
-    doc.setFontSize(11);
-    doc.setFont('times', 'bold');
-    doc.text('Charges', 14, 156);
-    doc.setFont('times', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Base Price: INR ${record.basePrice}`, 14, 162);
-    doc.text(`GST (10%): INR ${record.gstAmount}`, 14, 167);
-    doc.text(`Service Charge (2%): INR ${record.serviceChargeAmount}`, 14, 172);
-    doc.setFont('times', 'bold');
-    doc.text(`Total Paid: INR ${record.totalAmount}`, 14, 178);
-    doc.setFont('times', 'normal');
-    doc.text(`Payment Method: ${record.paymentMethod}`, 14, 183);
+    y += 2;
+    line(y);
+    y += 8;
+    write('Charges', 11, 'bold');
+    write(`Base Price: INR ${record.basePrice}`);
+    write(`GST (10%): INR ${record.gstAmount}`);
+    write(`Service Charge (2%): INR ${record.serviceChargeAmount}`);
+    write(`Service Billing (${record.additionalServiceCount}): INR ${record.additionalServiceAmount}`);
+    write(`Refund Initiated (Services): INR ${record.serviceRefundInitiatedAmount}`);
+    write(`Room Booking Total: INR ${record.totalAmount}`, 10, 'bold');
+    write(`Grand Total (Before Refund): INR ${record.grandTotalAmount}`, 10, 'bold');
+    write(`Net Payable (After Initiated Refund): INR ${record.netPayableAmount}`, 10, 'bold');
+    write(`Payment Method: ${record.paymentMethod}`);
 
-    line(188, [176, 132, 75]);
-    doc.setFontSize(10);
-    doc.setFont('times', 'italic');
-    doc.text(`Thank you for choosing ${hotelName}.`, 14, 196);
+    this.writeServiceChargeDetails(record.serviceChargeDetails, () => y, (nextY) => { y = nextY; }, ensureSpace, line, write, writeWrapped);
+
+    y += 2;
+    ensureSpace(12);
+    line(y, [176, 132, 75]);
+    y += 8;
+    write(`Thank you for choosing ${hotelName}.`, 10, 'italic');
 
     doc.save(`invoice-${record.invoiceId}.pdf`);
+  }
+
+  private writeServiceChargeDetails(
+      lines: InvoiceServiceChargeDetail[],
+      getY: () => number,
+      setY: (value: number) => void,
+      ensureSpace: (required: number) => void,
+      line: (y: number, color?: [number, number, number]) => void,
+      write: (text: string, fontSize?: number, style?: 'normal' | 'bold' | 'italic', gap?: number) => void,
+      writeWrapped: (text: string, fontSize?: number, style?: 'normal' | 'bold' | 'italic', width?: number, gap?: number) => void
+  ): void {
+    const serviceLines = lines ?? [];
+    let y = getY();
+    y += 2;
+    line(y);
+    y += 8;
+    setY(y);
+    write('Service Charge Details', 11, 'bold');
+
+    if (!serviceLines.length) {
+      write('No additional service transactions linked to this booking.');
+      return;
+    }
+
+    serviceLines.forEach((item, index) => {
+      ensureSpace(16);
+      line(getY(), [235, 223, 204]);
+      setY(getY() + 6);
+      write(`${index + 1}. ${item.serviceType} · ${item.serviceSummary}`, 10, 'bold');
+      write(`Request: ${item.requestId} · Status: ${item.status} · Amount: INR ${item.amount}`);
+      write(`Selected Date/Time: ${item.serviceDateTime}`);
+      writeWrapped(`Selected Details: ${item.serviceDetails}`);
+      if (item.refundInitiatedAmount > 0) {
+        writeWrapped(
+            `Cancellation Note: ${item.refundNote || `Refund amount INR ${item.refundInitiatedAmount} initiated to bank and will be processed in 2 business days.`}`,
+            10,
+            'italic'
+        );
+      }
+    });
   }
 
   private formatDateTime(value: string): string {

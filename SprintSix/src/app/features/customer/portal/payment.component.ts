@@ -143,9 +143,9 @@ export class PaymentComponent {
         children: Number(params.get('children') ?? 0),
         specialRequests: params.get('specialRequests') ?? '',
         additionalAmount: Number(params.get('additionalAmount') ?? 0),
-        paymentMethod: params.get('paymentMethod') ?? 'credit'
+        paymentMethod: 'Card'
       };
-      this.paymentMethod = params.get('paymentMethod') ?? 'Card';
+      this.paymentMethod = 'Card';
       this.stage = 'card';
       this.isMockLoading = false;
       this.isSubmitting = false;
@@ -184,7 +184,7 @@ export class PaymentComponent {
       this.isMockLoading = false;
       this.stage = 'otp';
       this.otpPopupOpen = true;
-      this.form.get('otp')?.setValue('123456');
+      this.form.get('otp')?.setValue('');
       this.form.get('otp')?.markAsUntouched();
     }, 1200);
   }
@@ -339,14 +339,6 @@ export class PaymentComponent {
     this.otpPopupOpen = false;
     this.form.get('otp')?.setValue('');
     this.retry();
-  }
-
-  setDemoOtp(value: string): void {
-    if (this.isMockLoading || this.isSubmitting) {
-      return;
-    }
-    this.form.get('otp')?.setValue(value);
-    this.form.get('otp')?.markAsTouched();
   }
 
   formatExpiry(): void {

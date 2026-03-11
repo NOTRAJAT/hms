@@ -27,6 +27,9 @@ export interface BookingResponse {
   basePrice: number;
   gstAmount: number;
   serviceChargeAmount: number;
+  additionalServiceAmount: number;
+  additionalServiceCount: number;
+  grandTotalAmount: number;
   totalAmount: number;
   paymentMethod: string;
   status: 'Confirmed' | 'Cancelled' | string;
@@ -76,6 +79,12 @@ export interface InvoiceResponse {
   basePrice: number;
   gstAmount: number;
   serviceChargeAmount: number;
+  additionalServiceAmount: number;
+  additionalServiceCount: number;
+  serviceRefundInitiatedAmount: number;
+  netPayableAmount: number;
+  serviceChargeDetails: InvoiceServiceChargeDetail[];
+  grandTotalAmount: number;
   totalAmount: number;
   paymentMethod: string;
   invoiceDateTime: string;
@@ -83,6 +92,18 @@ export interface InvoiceResponse {
   hotelAddress: string;
   hotelEmail: string;
   hotelSupportNumber: string;
+}
+
+export interface InvoiceServiceChargeDetail {
+  requestId: string;
+  serviceType: string;
+  status: string;
+  amount: number;
+  serviceDateTime: string;
+  serviceSummary: string;
+  serviceDetails: string;
+  refundInitiatedAmount: number;
+  refundNote: string;
 }
 
 export interface ModifyBookingPayload {

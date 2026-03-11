@@ -16,6 +16,7 @@ public class SalonServiceCreateRequest {
   private LocalDateTime slotDateTime;
 
   @NotBlank
+  @Pattern(regexp = "^(?i)card$")
   private String paymentMethod;
 
   @NotBlank

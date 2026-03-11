@@ -219,7 +219,7 @@ export class MyBookingsComponent implements OnInit {
           adults: payload.adults,
           children: payload.children,
           additionalAmount: this.modificationPreview.additionalAmount,
-          paymentMethod: this.modifyingBooking.paymentMethod || 'credit'
+          paymentMethod: 'Card'
         }
       });
       return;
@@ -269,7 +269,7 @@ export class MyBookingsComponent implements OnInit {
     this.bookingApi.invoice(booking.bookingId, userId).subscribe({
       next: (invoice) => {
         this.invoiceService.downloadInvoice(invoice);
-        alert('Your invoice has been successfully downloaded.');
+        this.successMessage = 'Your invoice has been successfully downloaded.';
       },
       error: () => {
         this.errorMessage = 'Unable to generate invoice. Please try again later.';
@@ -442,7 +442,7 @@ export class MyBookingsComponent implements OnInit {
       adults: Number(this.modifyForm.value.adults ?? 1),
       children: Number(this.modifyForm.value.children ?? 0),
       roomType: String(this.modifyForm.value.roomType ?? ''),
-      paymentMethod: this.modifyingBooking?.paymentMethod || 'credit'
+      paymentMethod: 'Card'
     };
   }
 

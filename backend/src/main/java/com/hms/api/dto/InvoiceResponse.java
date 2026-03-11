@@ -1,5 +1,7 @@
 package com.hms.api.dto;
 
+import java.util.List;
+
 public class InvoiceResponse {
   private String invoiceId;
   private String bookingId;
@@ -19,6 +21,12 @@ public class InvoiceResponse {
   private int basePrice;
   private int gstAmount;
   private int serviceChargeAmount;
+  private int additionalServiceAmount;
+  private int additionalServiceCount;
+  private int serviceRefundInitiatedAmount;
+  private int netPayableAmount;
+  private List<InvoiceServiceChargeDetail> serviceChargeDetails;
+  private int grandTotalAmount;
   private int totalAmount;
   private String paymentMethod;
   private String invoiceDateTime;
@@ -46,6 +54,12 @@ public class InvoiceResponse {
       int basePrice,
       int gstAmount,
       int serviceChargeAmount,
+      int additionalServiceAmount,
+      int additionalServiceCount,
+      int serviceRefundInitiatedAmount,
+      int netPayableAmount,
+      List<InvoiceServiceChargeDetail> serviceChargeDetails,
+      int grandTotalAmount,
       int totalAmount,
       String paymentMethod,
       String invoiceDateTime,
@@ -72,6 +86,12 @@ public class InvoiceResponse {
     this.basePrice = basePrice;
     this.gstAmount = gstAmount;
     this.serviceChargeAmount = serviceChargeAmount;
+    this.additionalServiceAmount = additionalServiceAmount;
+    this.additionalServiceCount = additionalServiceCount;
+    this.serviceRefundInitiatedAmount = serviceRefundInitiatedAmount;
+    this.netPayableAmount = netPayableAmount;
+    this.serviceChargeDetails = serviceChargeDetails;
+    this.grandTotalAmount = grandTotalAmount;
     this.totalAmount = totalAmount;
     this.paymentMethod = paymentMethod;
     this.invoiceDateTime = invoiceDateTime;
@@ -151,6 +171,30 @@ public class InvoiceResponse {
 
   public int getServiceChargeAmount() {
     return serviceChargeAmount;
+  }
+
+  public int getAdditionalServiceAmount() {
+    return additionalServiceAmount;
+  }
+
+  public int getAdditionalServiceCount() {
+    return additionalServiceCount;
+  }
+
+  public int getServiceRefundInitiatedAmount() {
+    return serviceRefundInitiatedAmount;
+  }
+
+  public int getNetPayableAmount() {
+    return netPayableAmount;
+  }
+
+  public List<InvoiceServiceChargeDetail> getServiceChargeDetails() {
+    return serviceChargeDetails;
+  }
+
+  public int getGrandTotalAmount() {
+    return grandTotalAmount;
   }
 
   public int getTotalAmount() {

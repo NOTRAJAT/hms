@@ -36,7 +36,7 @@ export class BookingConfirmationComponent {
 
   form = this.fb.group({
     specialRequests: [''],
-    paymentMethod: ['', [Validators.required]]
+    paymentMethod: ['Card', [Validators.required]]
   });
 
   constructor(
@@ -59,10 +59,11 @@ export class BookingConfirmationComponent {
         adults: Number(params.get('adults') ?? 1),
         children: Number(params.get('children') ?? 0)
       };
-      this.paymentMethod = params.get('paymentMethod') ?? (this.form.value.paymentMethod ?? 'Card');
+      this.paymentMethod = this.normalizePaymentMethod(params.get('paymentMethod'));
       this.bookingId = params.get('bookingId') ?? '';
       this.transactionId = params.get('transactionId') ?? '';
       this.invoiceId = params.get('invoiceId') ?? '';
+      this.form.patchValue({ paymentMethod: 'Card' }, { emitEvent: false });
 
       const status = params.get('paymentStatus');
       if (status === 'success') {
@@ -128,6 +129,10 @@ export class BookingConfirmationComponent {
   }
 
   proceed(): void {
+    if (this.hasSuccessfulPayment) {
+      this.router.navigateByUrl('/bookings');
+      return;
+    }
     if (this.form.invalid || this.occupancyInvalid) {
       this.form.markAllAsTouched();
       return;
@@ -146,10 +151,22 @@ export class BookingConfirmationComponent {
         checkOut: this.room.checkOut,
         adults: this.room.adults,
         children: this.room.children,
-        paymentMethod: this.form.value.paymentMethod ?? '',
+        paymentMethod: 'Card',
         specialRequests: String(this.form.value.specialRequests ?? '')
       }
     });
+  }
+
+  goToMyBookings(): void {
+    this.router.navigateByUrl('/bookings');
+  }
+
+  get hasSuccessfulPayment(): boolean {
+    return this.paymentStatus === 'success' && !!this.bookingId;
+  }
+
+  private normalizePaymentMethod(raw: string | null): string {
+    return raw && raw.trim().toLowerCase() === 'card' ? 'Card' : 'Card';
   }
 
   downloadInvoice(): void {

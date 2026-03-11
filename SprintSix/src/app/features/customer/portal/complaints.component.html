@@ -115,6 +115,10 @@
        *ngIf="form.get('title')?.touched && form.get('title')?.errors?.['minlength']">
       Title must be at least 10 characters.
     </p>
+    <p class="text-xs text-rose-600 mt-1"
+       *ngIf="form.get('title')?.touched && form.get('title')?.errors?.['maxlength']">
+      Title must be at most 100 characters.
+    </p>
   </div>
 
   <!-- DESCRIPTION -->
@@ -134,6 +138,10 @@
     <p class="text-xs text-rose-600 mt-1"
        *ngIf="form.get('description')?.touched && form.get('description')?.errors?.['minlength']">
       Description must be at least 20 characters.
+    </p>
+    <p class="text-xs text-rose-600 mt-1"
+       *ngIf="form.get('description')?.touched && form.get('description')?.errors?.['maxlength']">
+      Description must be at most 500 characters.
     </p>
   </div>
 

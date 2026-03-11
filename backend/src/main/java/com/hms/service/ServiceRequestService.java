@@ -100,6 +100,7 @@ public class ServiceRequestService {
     int amount = CAB_FARES.get(destination);
 
     validatePaymentDetails(
+        request.getPaymentMethod(),
         request.getCardNumber(),
         request.getExpiryDate(),
         request.getCvv(),
@@ -126,7 +127,6 @@ public class ServiceRequestService {
         booking,
         ServiceRequest.ServiceType.Cab,
         pickup,
-        request.getPaymentMethod(),
         amount,
         summary,
         details,
@@ -146,6 +146,7 @@ public class ServiceRequestService {
     SalonPackage selected = normalizeSalonPackage(request.getPackageCode());
 
     validatePaymentDetails(
+        request.getPaymentMethod(),
         request.getCardNumber(),
         request.getExpiryDate(),
         request.getCvv(),
@@ -174,7 +175,6 @@ public class ServiceRequestService {
         booking,
         ServiceRequest.ServiceType.Salon,
         slot,
-        request.getPaymentMethod(),
         selected.price(),
         summary,
         details,
@@ -193,6 +193,7 @@ public class ServiceRequestService {
     Booking booking = validateEligibleBooking(userId, request.getBookingId(), delivery.toLocalDate(), "deliveryDateTime");
 
     validatePaymentDetails(
+        request.getPaymentMethod(),
         request.getCardNumber(),
         request.getExpiryDate(),
         request.getCvv(),
@@ -246,7 +247,6 @@ public class ServiceRequestService {
         booking,
         ServiceRequest.ServiceType.Dining,
         delivery,
-        request.getPaymentMethod(),
         total,
         summary,
         details,
@@ -335,6 +335,16 @@ public class ServiceRequestService {
     }
 
     item.setStatus(target);
+    if (target == ServiceRequest.Status.Cancelled) {
+      String refundNote = String.format(
+          "Refund amount INR %d initiated to bank and will be processed in 2 business days.",
+          item.getAmount()
+      );
+      String currentDetails = item.getServiceDetails() == null ? "" : item.getServiceDetails().trim();
+      if (!currentDetails.toLowerCase(Locale.ROOT).contains("refund initiated")) {
+        item.setServiceDetails(currentDetails.isBlank() ? refundNote : currentDetails + " " + refundNote);
+      }
+    }
     serviceRequestRepository.save(item);
     return toAdminResponse(item);
   }
@@ -343,7 +353,6 @@ public class ServiceRequestService {
       Booking booking,
       ServiceRequest.ServiceType type,
       LocalDateTime serviceDateTime,
-      String paymentMethod,
       int amount,
       String summary,
       String details,
@@ -359,7 +368,7 @@ public class ServiceRequestService {
     request.setStatus(ServiceRequest.Status.Requested);
     request.setAmount(amount);
     request.setPaymentStatus("PAID");
-    request.setPaymentMethod(paymentMethod == null ? "Card" : paymentMethod.trim());
+    request.setPaymentMethod("Card");
     request.setTransactionId(generateUniqueId("STX", serviceRequestRepository::existsByTransactionId));
     request.setServiceDateTime(serviceDateTime);
     request.setServiceSummary(summary);
@@ -455,12 +464,16 @@ public class ServiceRequestService {
   }
 
   private void validatePaymentDetails(
+      String paymentMethod,
       String cardNumber,
       String expiryDate,
       String cvv,
       String otp,
       String billingAddress
   ) {
+    if (paymentMethod == null || !"card".equalsIgnoreCase(paymentMethod.trim())) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "paymentMethod", "Only Card payment method is supported.");
+    }
     if (!isCardNumberValid(cardNumber)) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid card number");
     }

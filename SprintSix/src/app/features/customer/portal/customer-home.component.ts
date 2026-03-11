@@ -13,6 +13,7 @@ import { BookingResponse } from '../../../core/models/booking.model';
 })
 export class CustomerHomeComponent implements OnInit {
   bookings: BookingResponse[] = [];
+  bookingCarouselIndex = 0;
   isLoadingBookings = false;
   bookingError = '';
 
@@ -33,27 +34,26 @@ export class CustomerHomeComponent implements OnInit {
     return this.bookings.slice(0, 3);
   }
 
-  get upcomingCount(): number {
+  get currentBookings(): BookingResponse[] {
     const today = this.toDateOnly(new Date());
-    return this.bookings.filter((booking) => {
-      if (String(booking.status).toLowerCase() === 'cancelled') {
+    const confirmed = this.bookings
+      .filter((booking) => String(booking.status ?? '').trim().toLowerCase() === 'confirmed')
+      .filter((booking) => this.toDateOnly(this.parseDate(booking.checkOutDate)) >= today)
+      .sort((a, b) => this.toDateOnly(this.parseDate(a.checkInDate)) - this.toDateOnly(this.parseDate(b.checkInDate)));
+
+    const seen = new Set<string>();
+    return confirmed.filter((booking) => {
+      const key = String(booking.bookingId ?? '').trim();
+      if (!key || seen.has(key)) {
         return false;
       }
-      const checkOut = this.toDateOnly(this.parseDate(booking.checkOutDate));
-      return checkOut >= today;
-    }).length;
+      seen.add(key);
+      return true;
+    });
   }
 
-  get pastCount(): number {
-    const today = this.toDateOnly(new Date());
-    return this.bookings.filter((booking) => {
-      const checkOut = this.toDateOnly(this.parseDate(booking.checkOutDate));
-      return checkOut < today;
-    }).length;
-  }
-
-  get cancelledCount(): number {
-    return this.bookings.filter((booking) => String(booking.status).toLowerCase() === 'cancelled').length;
+  get hasCurrentBookings(): boolean {
+    return this.currentBookings.length > 0;
   }
 
   private loadBookings(): void {
@@ -66,14 +66,60 @@ export class CustomerHomeComponent implements OnInit {
     this.bookingApi.list(userId).subscribe({
       next: (items) => {
         this.bookings = Array.isArray(items) ? items : [];
+        this.resetBookingCarousel();
         this.isLoadingBookings = false;
       },
       error: () => {
         this.bookings = [];
+        this.resetBookingCarousel();
         this.bookingError = 'Unable to load your booking snapshot right now.';
         this.isLoadingBookings = false;
       }
     });
+  }
+
+  prevBookingSlide(): void {
+    const total = this.currentBookings.length;
+    if (total <= 1) {
+      return;
+    }
+    this.bookingCarouselIndex = (this.bookingCarouselIndex - 1 + total) % total;
+  }
+
+  nextBookingSlide(): void {
+    const total = this.currentBookings.length;
+    if (total <= 1) {
+      return;
+    }
+    this.bookingCarouselIndex = (this.bookingCarouselIndex + 1) % total;
+  }
+
+  goToBookingSlide(index: number): void {
+    const total = this.currentBookings.length;
+    if (index < 0 || index >= total) {
+      return;
+    }
+    this.bookingCarouselIndex = index;
+  }
+
+  private resetBookingCarousel(): void {
+    if (this.bookingCarouselIndex >= this.currentBookings.length) {
+      this.bookingCarouselIndex = 0;
+    }
+  }
+
+  roomImage(roomType: string): string {
+    const normalized = String(roomType ?? '').trim().toLowerCase();
+    if (normalized === 'deluxe') {
+      return '/assets/Deluxe.png';
+    }
+    if (normalized === 'suite') {
+      return '/assets/Suite.png';
+    }
+    if (normalized === 'supreme') {
+      return '/assets/Supreme.png';
+    }
+    return '/assets/Standard.png';
   }
 
   private parseDate(value: string): Date {
